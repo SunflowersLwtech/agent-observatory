@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useObservatory } from "./use-observatory";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TokenTimeline } from "./token-timeline";
 
 export function OverviewDashboard() {
   const { stats, tokenStates, events, loading } = useObservatory();
@@ -159,6 +160,9 @@ export function OverviewDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Token Exchange Timeline */}
+      <TokenTimeline events={events} />
 
       {/* Recent Events */}
       <Card>
