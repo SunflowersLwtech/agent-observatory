@@ -1,38 +1,56 @@
 import { Auth0AI } from "@auth0/ai-vercel";
+import type { ToolWrapper } from "@auth0/ai-vercel";
 
-const auth0AI = new Auth0AI();
+let _auth0AI: Auth0AI | null = null;
+let _withGoogleCalendar: ToolWrapper | null = null;
+let _withGitHub: ToolWrapper | null = null;
+let _withSlack: ToolWrapper | null = null;
 
-export const withGoogleCalendar = auth0AI.withTokenVault({
-  connection: "google-oauth2",
-  scopes: [
-    "https://www.googleapis.com/auth/calendar.freebusy",
-    "https://www.googleapis.com/auth/calendar.events.readonly",
-  ],
-  refreshToken: async () => {
-    const { auth0 } = await import("@/lib/auth0");
-    const session = await auth0.getSession();
-    return session?.tokenSet.refreshToken as string;
-  },
-});
+function getAuth0AI() {
+  if (!_auth0AI) {
+    _auth0AI = new Auth0AI();
+  }
+  return _auth0AI;
+}
 
-export const withGitHub = auth0AI.withTokenVault({
-  connection: "github",
-  scopes: ["repo", "read:user"],
-  refreshToken: async () => {
-    const { auth0 } = await import("@/lib/auth0");
-    const session = await auth0.getSession();
-    return session?.tokenSet.refreshToken as string;
-  },
-});
+async function getRefreshToken() {
+  const { auth0 } = await import("@/lib/auth0");
+  const session = await auth0.getSession();
+  return session?.tokenSet.refreshToken as string;
+}
 
-export const withSlack = auth0AI.withTokenVault({
-  connection: "slack",
-  scopes: ["channels:read", "groups:read", "chat:write", "users:read"],
-  refreshToken: async () => {
-    const { auth0 } = await import("@/lib/auth0");
-    const session = await auth0.getSession();
-    return session?.tokenSet.refreshToken as string;
-  },
-});
+export function getWithGoogleCalendar(): ToolWrapper {
+  if (!_withGoogleCalendar) {
+    _withGoogleCalendar = getAuth0AI().withTokenVault({
+      connection: "google-oauth2",
+      scopes: [
+        "https://www.googleapis.com/auth/calendar.freebusy",
+        "https://www.googleapis.com/auth/calendar.events.readonly",
+      ],
+      refreshToken: getRefreshToken,
+    });
+  }
+  return _withGoogleCalendar;
+}
 
-export { auth0AI };
+export function getWithGitHub(): ToolWrapper {
+  if (!_withGitHub) {
+    _withGitHub = getAuth0AI().withTokenVault({
+      connection: "github",
+      scopes: ["repo", "read:user"],
+      refreshToken: getRefreshToken,
+    });
+  }
+  return _withGitHub;
+}
+
+export function getWithSlack(): ToolWrapper {
+  if (!_withSlack) {
+    _withSlack = getAuth0AI().withTokenVault({
+      connection: "slack",
+      scopes: ["channels:read", "groups:read", "chat:write", "users:read"],
+      refreshToken: getRefreshToken,
+    });
+  }
+  return _withSlack;
+}

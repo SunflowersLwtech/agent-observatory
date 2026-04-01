@@ -2,13 +2,13 @@ import { tool } from "ai";
 import { z } from "zod";
 import { Octokit } from "@octokit/rest";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
-import { withGitHub } from "@/lib/auth0-ai";
+import { getWithGitHub } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
 
 const SCOPES = ["repo", "read:user"];
 
-export const listGitHubRepos = withGitHub(
+export const listGitHubRepos = getWithGitHub()(
   tool({
     description:
       "List the authenticated user's GitHub repositories, sorted by most recently updated",
@@ -117,7 +117,7 @@ export const listGitHubRepos = withGitHub(
   })
 );
 
-export const listGitHubIssues = withGitHub(
+export const listGitHubIssues = getWithGitHub()(
   tool({
     description:
       "List open issues for a specific GitHub repository",

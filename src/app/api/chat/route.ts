@@ -8,7 +8,7 @@ import {
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
 import { withInterruptions } from "@auth0/ai-vercel/interrupts";
-import { allTools } from "@/lib/tools";
+import { getAllTools } from "@/lib/tools";
 import { auth0 } from "@/lib/auth0";
 
 export const maxDuration = 60;
@@ -52,6 +52,8 @@ export async function POST(req: Request) {
 
   setAIContext({ threadID: id });
 
+  const tools = getAllTools();
+
   return createUIMessageStreamResponse({
     stream: createUIMessageStream({
       execute: withInterruptions(
@@ -60,12 +62,12 @@ export async function POST(req: Request) {
             model: openai("gpt-4o"),
             system: SYSTEM_PROMPT,
             messages: await convertToModelMessages(messages),
-            tools: allTools,
+            tools,
           });
 
           writer.merge(result.toUIMessageStream());
         },
-        { messages, tools: allTools }
+        { messages, tools }
       ),
     }),
   });

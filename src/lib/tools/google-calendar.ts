@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { google } from "googleapis";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
-import { withGoogleCalendar } from "@/lib/auth0-ai";
+import { getWithGoogleCalendar } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
 
@@ -17,7 +17,7 @@ function getCalendarClient(accessToken: string) {
   return google.calendar({ version: "v3", auth });
 }
 
-export const checkCalendarAvailability = withGoogleCalendar(
+export const checkCalendarAvailability = getWithGoogleCalendar()(
   tool({
     description:
       "Check if the user is free or busy during a specific time range on Google Calendar",
@@ -125,7 +125,7 @@ export const checkCalendarAvailability = withGoogleCalendar(
   })
 );
 
-export const listCalendarEvents = withGoogleCalendar(
+export const listCalendarEvents = getWithGoogleCalendar()(
   tool({
     description:
       "List upcoming events from the user's Google Calendar within a time range",

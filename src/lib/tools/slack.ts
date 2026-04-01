@@ -2,14 +2,14 @@ import { tool } from "ai";
 import { z } from "zod";
 import { WebClient } from "@slack/web-api";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
-import { withSlack } from "@/lib/auth0-ai";
+import { getWithSlack } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
 
 const READ_SCOPES = ["channels:read", "groups:read", "users:read"];
 const WRITE_SCOPES = ["chat:write"];
 
-export const listSlackChannels = withSlack(
+export const listSlackChannels = getWithSlack()(
   tool({
     description:
       "List Slack channels the user has access to, including public and private channels",
@@ -105,7 +105,7 @@ export const listSlackChannels = withSlack(
   })
 );
 
-export const sendSlackMessage = withSlack(
+export const sendSlackMessage = getWithSlack()(
   tool({
     description:
       "Send a message to a Slack channel. This is a HIGH RISK operation that may require step-up authorization.",

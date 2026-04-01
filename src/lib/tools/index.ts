@@ -1,15 +1,25 @@
-import {
-  checkCalendarAvailability,
-  listCalendarEvents,
-} from "./google-calendar";
-import { listGitHubRepos, listGitHubIssues } from "./github";
-import { listSlackChannels, sendSlackMessage } from "./slack";
+import type { Tool } from "ai";
 
-export const allTools = {
-  checkCalendarAvailability,
-  listCalendarEvents,
-  listGitHubRepos,
-  listGitHubIssues,
-  listSlackChannels,
-  sendSlackMessage,
-};
+let _allTools: Record<string, Tool> | null = null;
+
+export function getAllTools(): Record<string, Tool> {
+  if (!_allTools) {
+    // Lazy import to avoid Auth0 SDK init at build time
+    const {
+      checkCalendarAvailability,
+      listCalendarEvents,
+    } = require("./google-calendar");
+    const { listGitHubRepos, listGitHubIssues } = require("./github");
+    const { listSlackChannels, sendSlackMessage } = require("./slack");
+
+    _allTools = {
+      checkCalendarAvailability,
+      listCalendarEvents,
+      listGitHubRepos,
+      listGitHubIssues,
+      listSlackChannels,
+      sendSlackMessage,
+    };
+  }
+  return _allTools;
+}
