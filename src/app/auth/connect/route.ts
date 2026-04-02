@@ -17,8 +17,16 @@ export async function GET(req: NextRequest) {
   const returnTo = searchParams.get("returnTo") ?? "/close";
   const scopes = searchParams.getAll("scopes");
 
-  if (!connection) {
-    return new Response("Missing connection parameter", { status: 400 });
+  // Validate connection against allowlist to prevent parameter injection
+  const ALLOWED_CONNECTIONS = ["google-oauth2", "github", "slack"];
+  if (!connection || !ALLOWED_CONNECTIONS.includes(connection)) {
+    return new Response("Invalid or missing connection parameter", { status: 400 });
+  }
+
+  // Validate returnTo to prevent open redirect
+  const ALLOWED_RETURN_PATHS = ["/close", "/dashboard"];
+  if (!ALLOWED_RETURN_PATHS.includes(returnTo)) {
+    return new Response("Invalid returnTo parameter", { status: 400 });
   }
 
   // Build the Auth0 Connected Accounts URL

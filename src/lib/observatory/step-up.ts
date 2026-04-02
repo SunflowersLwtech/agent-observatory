@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { recordEvent } from "./event-store";
-import { classifyToolRisk, shouldTriggerStepUp } from "./risk-classifier";
+import { classifyToolRisk } from "./risk-classifier";
 
 /**
  * Step-up authorization tool — Pattern 3: Interrupt-as-Circuit-Breaker

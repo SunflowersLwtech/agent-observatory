@@ -32,7 +32,7 @@ At RSAC 2026, five major vendors shipped agent identity frameworks. None of them
 | Identity & Privilege Abuse | ASI03 | Least-privilege scopes + post-auth monitoring |
 | Agentic Supply Chain | ASI04 | Tool definitions pinned at build time |
 | Unexpected Code Execution | ASI05 | No code execution tools exposed |
-| Memory & Context Poisoning | ASI06 | FGA document-level access control |
+| Memory & Context Poisoning | ASI06 | FGA service-level access control (ReBAC model) |
 | Insecure Inter-Agent Comm | ASI07 | Single-agent architecture, no inter-agent calls |
 | Cascading Failures | ASI08 | Error capture prevents silent cascading |
 | Human-Agent Trust Exploitation | ASI09 | Interrupt-as-circuit-breaker for write ops |

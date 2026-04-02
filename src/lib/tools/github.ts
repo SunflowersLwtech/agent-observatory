@@ -26,6 +26,13 @@ export const listGitHubRepos = getWithGitHub()(
         .describe("Number of repos to return"),
     }),
     execute: async ({ sort, perPage }) => {
+      // FGA authorization check
+      const auth0Module = await import("@/lib/auth0");
+      const session = await auth0Module.auth0.getSession();
+      if (session?.user?.sub && !canAccessService(session.user.sub, "github")) {
+        return { error: "Access denied: you do not have permission to access GitHub." };
+      }
+
       const startTime = Date.now();
       const { riskLevel, owaspCategories } = classifyToolRisk(
         "list_github_repos",
@@ -132,6 +139,13 @@ export const listGitHubIssues = getWithGitHub()(
       perPage: z.number().optional().default(10),
     }),
     execute: async ({ owner, repo, state, perPage }) => {
+      // FGA authorization check
+      const auth0Module = await import("@/lib/auth0");
+      const session = await auth0Module.auth0.getSession();
+      if (session?.user?.sub && !canAccessService(session.user.sub, "github")) {
+        return { error: "Access denied: you do not have permission to access GitHub." };
+      }
+
       const startTime = Date.now();
       const { riskLevel, owaspCategories } = classifyToolRisk(
         "list_github_issues",

@@ -31,6 +31,23 @@ export const checkCalendarAvailability = getWithGoogleCalendar()(
         .describe("End time in ISO 8601 format (e.g., 2026-04-03T17:00:00Z)"),
     }),
     execute: async ({ timeMin, timeMax }) => {
+      // FGA authorization check (OWASP ASI03/ASI06)
+      const auth0Module = await import("@/lib/auth0");
+      const session = await auth0Module.auth0.getSession();
+      if (session?.user?.sub && !canAccessService(session.user.sub, "google-calendar")) {
+        recordEvent({
+          type: "authorization_decision",
+          tool: "check_calendar_availability",
+          service: "google",
+          scopes: SCOPES,
+          riskLevel: "critical",
+          owaspCategories: ["ASI03", "ASI06"],
+          outcome: "failure",
+          details: { reason: "FGA: user lacks Google Calendar access" },
+        });
+        return { error: "Access denied: you do not have permission to access Google Calendar." };
+      }
+
       const startTime = Date.now();
       const { riskLevel, owaspCategories } = classifyToolRisk(
         "check_calendar_availability",
@@ -144,6 +161,13 @@ export const listCalendarEvents = getWithGoogleCalendar()(
         .describe("Maximum number of events to return"),
     }),
     execute: async ({ timeMin, timeMax, maxResults }) => {
+      // FGA authorization check
+      const auth0Module = await import("@/lib/auth0");
+      const session = await auth0Module.auth0.getSession();
+      if (session?.user?.sub && !canAccessService(session.user.sub, "google-calendar")) {
+        return { error: "Access denied: you do not have permission to access Google Calendar." };
+      }
+
       const startTime = Date.now();
       const { riskLevel, owaspCategories } = classifyToolRisk(
         "list_calendar_events",
