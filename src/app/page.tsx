@@ -28,10 +28,11 @@ export default async function LandingPage() {
             <Eye className="h-6 w-6 text-primary" />
             <span className="font-semibold text-lg">Agent Observatory</span>
           </div>
-          <a href="/auth/login">
-            <Button variant="default" size="sm">
-              Sign In <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
+          <a
+            href="/auth/login"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Sign In <ArrowRight className="ml-1 h-4 w-4" />
           </a>
         </div>
       </header>
