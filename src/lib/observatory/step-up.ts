@@ -48,10 +48,13 @@ export const confirmHighRiskOperation = tool({
     // plan, we use the AI SDK's tool result pattern: the agent presents the
     // confirmation to the user in the chat, and the user must explicitly approve.
     return {
-      confirmed: true,
-      note: "User was presented with the operation details in the chat. " +
-        "Proceed only if the user explicitly confirms in their next message. " +
-        "If the user does not confirm, do NOT proceed with the operation.",
+      confirmed: false,
+      requiresUserApproval: true,
+      instruction:
+        "STOP. Do NOT execute the write operation yet. " +
+        "Present the following to the user and WAIT for their explicit 'yes' or approval: " +
+        `Operation: ${operation}. Service: ${service}. Risk: HIGH (${riskReason}). ` +
+        "Only proceed if the user explicitly approves in their next message.",
       operation,
       service,
       riskLevel: "high",

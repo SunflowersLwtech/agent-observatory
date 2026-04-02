@@ -22,7 +22,7 @@ import { useObservatory } from "./use-observatory";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function TokenDebugger() {
-  const { tokenStates, events, loading, refresh } = useObservatory(2000);
+  const { tokenStates, events, loading, error, refresh } = useObservatory(2000);
 
   if (loading) {
     return (
@@ -31,6 +31,20 @@ export function TokenDebugger() {
           <Skeleton key={i} className="h-48 w-full" />
         ))}
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-destructive/30">
+        <CardContent className="pt-6 text-center space-y-3">
+          <XCircle className="h-8 w-8 text-destructive mx-auto" />
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" size="sm" onClick={refresh}>
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 

@@ -18,6 +18,13 @@ export const listSlackChannels = getWithSlack()(
       limit: z.number().optional().default(20).describe("Max channels to return"),
     }),
     execute: async ({ limit }) => {
+      // FGA authorization check
+      const auth0Module = await import("@/lib/auth0");
+      const session = await auth0Module.auth0.getSession();
+      if (session?.user?.sub && !canAccessService(session.user.sub, "slack")) {
+        return { error: "Access denied: you do not have permission to access Slack." };
+      }
+
       const startTime = Date.now();
       const { riskLevel, owaspCategories } = classifyToolRisk(
         "list_slack_channels",
