@@ -9,9 +9,22 @@ import { Separator } from "@/components/ui/separator";
 import { useObservatory } from "./use-observatory";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OWASP_RISKS } from "@/lib/observatory/risk-classifier";
+import { PermissionGraph } from "./permission-graph";
 
 export function ObservatoryDashboard() {
-  const { stats, events, loading } = useObservatory(2000);
+  const { stats, tokenStates, events, loading } = useObservatory(2000);
+
+  const handleRevoke = async (connection: string, service: string) => {
+    try {
+      await fetch("/api/observatory/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connection, service }),
+      });
+    } catch (err) {
+      console.error("Revoke failed:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -48,7 +61,12 @@ export function ObservatoryDashboard() {
       </TabsContent>
 
       <TabsContent value="permissions">
-        <PermissionLandscape events={events} stats={stats} />
+        <PermissionGraph
+          events={events}
+          tokenStates={tokenStates}
+          stats={stats}
+          onRevoke={handleRevoke}
+        />
       </TabsContent>
     </Tabs>
   );
@@ -249,123 +267,6 @@ function OWASPRiskMap({
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
-
-function PermissionLandscape({
-  events,
-  stats,
-}: {
-  events: Array<{
-    service: string;
-    scopes: string[];
-    tool: string;
-    riskLevel: string;
-  }>;
-  stats: {
-    byService: { google: number; github: number; slack: number };
-  } | null;
-}) {
-  const services = [
-    {
-      name: "Google Calendar",
-      key: "google",
-      color: "bg-blue-500",
-      scopes: [
-        {
-          scope: "calendar.freebusy",
-          risk: "low",
-          description: "Read free/busy status",
-        },
-        {
-          scope: "calendar.events.readonly",
-          risk: "low",
-          description: "Read calendar events",
-        },
-      ],
-    },
-    {
-      name: "GitHub",
-      key: "github",
-      color: "bg-purple-500",
-      scopes: [
-        { scope: "repo", risk: "medium", description: "Access repositories" },
-        { scope: "read:user", risk: "low", description: "Read user profile" },
-      ],
-    },
-    {
-      name: "Slack",
-      key: "slack",
-      color: "bg-green-500",
-      scopes: [
-        {
-          scope: "channels:read",
-          risk: "low",
-          description: "List channels",
-        },
-        {
-          scope: "chat:write",
-          risk: "high",
-          description: "Send messages",
-        },
-        {
-          scope: "users:read",
-          risk: "low",
-          description: "Read user info",
-        },
-      ],
-    },
-  ];
-
-  return (
-    <div className="grid gap-6 md:grid-cols-3">
-      {services.map((svc) => {
-        const usageCount =
-          stats?.byService[svc.key as keyof typeof stats.byService] ?? 0;
-        const usedScopes = new Set(
-          events
-            .filter((e) => e.service === svc.key)
-            .flatMap((e) => e.scopes)
-        );
-
-        return (
-          <Card key={svc.key}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <div className={`h-3 w-3 rounded-full ${svc.color}`} />
-                <CardTitle className="text-sm font-medium">
-                  {svc.name}
-                </CardTitle>
-                <Badge variant="outline" className="ml-auto text-xs">
-                  {usageCount} calls
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {svc.scopes.map((s) => {
-                const isUsed = usedScopes.size > 0;
-                return (
-                  <div key={s.scope} className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          isUsed ? svc.color : "bg-muted-foreground/30"
-                        }`}
-                      />
-                      <span className="text-xs font-mono">{s.scope}</span>
-                      <RiskBadge level={s.risk} />
-                    </div>
-                    <p className="text-[11px] text-muted-foreground pl-4">
-                      {s.description}
-                    </p>
-                  </div>
-                );
-              })}
             </CardContent>
           </Card>
         );

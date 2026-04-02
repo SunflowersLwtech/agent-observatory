@@ -4,7 +4,8 @@ import { WebClient } from "@slack/web-api";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { getWithSlack } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
-import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
+import { classifyToolRisk, shouldTriggerStepUp } from "@/lib/observatory/risk-classifier";
+import { canAccessService } from "@/lib/fga/model";
 
 const READ_SCOPES = ["channels:read", "groups:read", "users:read"];
 const WRITE_SCOPES = ["chat:write"];
@@ -119,6 +120,39 @@ export const sendSlackMessage = getWithSlack()(
         "send_slack_message",
         WRITE_SCOPES
       );
+
+      // FGA authorization check (OWASP ASI06 mitigation)
+      // In production, userId comes from the auth context
+      // For demo, we verify the service-level permission exists
+      const auth0Module = await import("@/lib/auth0");
+      const session = await auth0Module.auth0.getSession();
+      if (session?.user?.sub && !canAccessService(session.user.sub, "slack")) {
+        recordEvent({
+          type: "authorization_decision",
+          tool: "send_slack_message",
+          service: "slack",
+          scopes: WRITE_SCOPES,
+          riskLevel: "critical",
+          owaspCategories: ["ASI03", "ASI06"],
+          outcome: "failure",
+          details: { reason: "FGA: user lacks service access" },
+        });
+        return { error: "Access denied: you do not have permission to use Slack." };
+      }
+
+      // Step-up check (Pattern 3: Interrupt-as-Circuit-Breaker)
+      if (shouldTriggerStepUp(riskLevel)) {
+        recordEvent({
+          type: "step_up_triggered",
+          tool: "send_slack_message",
+          service: "slack",
+          scopes: WRITE_SCOPES,
+          riskLevel,
+          owaspCategories: [...owaspCategories, "ASI09"],
+          outcome: "pending",
+          details: { channel, textLength: text.length },
+        });
+      }
 
       recordEvent({
         type: "authorization_decision",

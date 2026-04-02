@@ -5,6 +5,7 @@ import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { getWithGitHub } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
+import { canAccessService } from "@/lib/fga/model";
 
 const SCOPES = ["repo", "read:user"];
 

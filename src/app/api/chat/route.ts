@@ -10,6 +10,8 @@ import { setAIContext } from "@auth0/ai-vercel";
 import { withInterruptions } from "@auth0/ai-vercel/interrupts";
 import { getAllTools } from "@/lib/tools";
 import { auth0 } from "@/lib/auth0";
+import { initializeUserPermissions } from "@/lib/fga/model";
+import { recordEvent } from "@/lib/observatory/event-store";
 
 export const maxDuration = 60;
 
@@ -49,6 +51,21 @@ export async function POST(req: Request) {
 
   const { messages, id }: { messages: UIMessage[]; id: string } =
     await req.json();
+
+  // Initialize FGA permissions for this user (idempotent)
+  const userId = session.user.sub;
+  initializeUserPermissions(userId);
+
+  recordEvent({
+    type: "authorization_decision",
+    tool: "session_start",
+    service: "auth0",
+    scopes: [],
+    riskLevel: "low",
+    owaspCategories: ["ASI03"],
+    outcome: "success",
+    details: { userId, threadId: id },
+  });
 
   setAIContext({ threadID: id });
 
