@@ -7,7 +7,9 @@ export default function ChatPage() {
       <div className="flex-1 flex flex-col">
         <ChatInterface />
       </div>
-      <EventSidebar />
+      <div className="hidden lg:block">
+        <EventSidebar />
+      </div>
     </div>
   );
 }

@@ -3,13 +3,13 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isToolUIPart, getToolName } from "ai";
 import { useInterruptions } from "@auth0/ai-vercel/react";
-import { useState, useRef, useEffect, useId } from "react";
-import { Send, Square, AlertTriangle, ExternalLink } from "lucide-react";
+import { useState, useRef, useEffect, useId, useCallback } from "react";
+import { Send, Square, AlertTriangle, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -156,13 +156,8 @@ export function ChatInterface() {
         </div>
       </ScrollArea>
 
-      {/* Token Vault Consent Dialog */}
-      {toolInterrupt && (
-        <ConsentDialog
-          interrupt={toolInterrupt}
-          onResume={() => toolInterrupt.resume()}
-        />
-      )}
+      {/* Token Vault Consent Dialog — proper Connected Accounts flow */}
+      {toolInterrupt && <ConsentDialog interrupt={toolInterrupt} />}
 
       {/* Input */}
       <div className="border-t border-border/50 px-6 py-4">
@@ -170,19 +165,31 @@ export function ChatInterface() {
           onSubmit={handleSubmit}
           className="max-w-3xl mx-auto flex items-center gap-3"
         >
-          <input
+          <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask your agent to check your calendar, repos, or channels..."
-            className="flex-1 bg-secondary/50 border border-border/50 rounded-lg px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
+            className="flex-1 bg-secondary/50"
             disabled={isLoading}
+            aria-label="Chat message input"
           />
           {isLoading ? (
-            <Button type="button" variant="outline" size="icon" onClick={stop}>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={stop}
+              aria-label="Stop generation"
+            >
               <Square className="h-4 w-4" />
             </Button>
           ) : (
-            <Button type="submit" size="icon" disabled={!input.trim()}>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!input.trim()}
+              aria-label="Send message"
+            >
               <Send className="h-4 w-4" />
             </Button>
           )}
@@ -242,11 +249,50 @@ function ToolCallCard({
 
 function ConsentDialog({
   interrupt,
-  onResume,
 }: {
-  interrupt: { name: string; code: string; tool: { name: string } };
-  onResume: () => void;
+  interrupt: {
+    name: string;
+    code: string;
+    connection?: string;
+    requiredScopes?: string[];
+    tool: { name: string };
+    resume: () => void;
+  };
 }) {
+  const [connecting, setConnecting] = useState(false);
+
+  const handleConnect = useCallback(() => {
+    setConnecting(true);
+
+    // Build the connect URL with connection and scopes
+    const params = new URLSearchParams({
+      connection: interrupt.connection ?? interrupt.name,
+      returnTo: "/close",
+    });
+    if (interrupt.requiredScopes) {
+      interrupt.requiredScopes.forEach((s) => params.append("scopes", s));
+    }
+
+    // Open popup for Auth0 Connected Accounts flow
+    const url = `/auth/connect?${params.toString()}`;
+    const popup = window.open(url, "_blank", "width=800,height=650,status=no,toolbar=no,menubar=no");
+
+    if (!popup) {
+      // Popup blocked — fall back to same-window redirect
+      window.location.href = url;
+      return;
+    }
+
+    // Poll for popup close, then resume the agent
+    const interval = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(interval);
+        setConnecting(false);
+        interrupt.resume();
+      }
+    }, 1000);
+  }, [interrupt]);
+
   return (
     <Dialog open>
       <DialogContent>
@@ -257,15 +303,23 @@ function ConsentDialog({
           </DialogTitle>
           <DialogDescription>
             The agent needs access to{" "}
-            <strong>{interrupt.tool?.name ?? interrupt.name}</strong> to
+            <strong>{interrupt.connection ?? interrupt.tool?.name}</strong> to
             continue. You&apos;ll be redirected to authorize this connection
             via Auth0 Token Vault.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="default" onClick={onResume}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Connect Account
+          <Button
+            variant="default"
+            onClick={handleConnect}
+            disabled={connecting}
+          >
+            {connecting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ExternalLink className="h-4 w-4 mr-2" />
+            )}
+            {connecting ? "Connecting..." : "Connect Account"}
           </Button>
         </DialogFooter>
       </DialogContent>
