@@ -12,29 +12,7 @@ At RSAC 2026, five major vendors shipped agent identity frameworks. None of them
 
 ## Architecture
 
-```
-+-----------------------------------------------------+
-|              Agent Observatory Dashboard             |
-|  +----------+  +----------+  +------------------+   |
-|  | Permission|  | Audit    |  | Token Lifecycle  |   |
-|  | Landscape |  | Trail    |  | Debugger         |   |
-|  +----------+  +----------+  +------------------+   |
-|  +----------+  +----------+  +------------------+   |
-|  | OWASP    |  | Risk     |  | Connection       |   |
-|  | Risk Map |  | Metrics  |  | Health Monitor   |   |
-|  +----------+  +----------+  +------------------+   |
-+-----------------------------------------------------+
-                         |
-          +--------------+--------------+
-          v              v              v
-   +-------------+ +----------+ +--------------+
-   | Token Vault | | Step-Up  | |   FGA/ReBAC  |
-   | 3 Services  | | Auth via | | Document-    |
-   | Google Cal  | | Interrupt| | level access |
-   | GitHub      | | Circuit  | | control      |
-   | Slack       | | Breaker  | |              |
-   +-------------+ +----------+ +--------------+
-```
+![Architecture Diagram](public/diagrams/architecture.svg)
 
 ## Auth0 Features Used
 
@@ -59,6 +37,8 @@ At RSAC 2026, five major vendors shipped agent identity frameworks. None of them
 | Cascading Failures | ASI08 | Error capture prevents silent cascading |
 | Human-Agent Trust Exploitation | ASI09 | Interrupt-as-circuit-breaker for write ops |
 | Rogue Agents | ASI10 | Real-time behavior monitoring via Observatory |
+
+![OWASP Coverage Map](public/diagrams/owasp-mapping.svg)
 
 ## Three Authorization Patterns
 

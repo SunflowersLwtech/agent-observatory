@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" fill="none">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="900" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="480" rx="16" fill="url(#bg2)"/>
+
+  <text x="450" y="38" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18" font-weight="700" fill="#f8fafc">OWASP Top 10 for Agentic Applications — Coverage Map</text>
+  <text x="450" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#64748b">Every risk category mapped to a mitigation in Agent Observatory</text>
+
+  <!-- Row 1: ASI01-ASI05 -->
+  <g transform="translate(30,80)">
+    <!-- ASI01 -->
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI01</text>
+    <text x="80" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Goal Hijack</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Token Vault limits</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">operation scopes</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <g transform="translate(200,80)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI02</text>
+    <text x="95" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Tool Misuse</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Every call risk-classified</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">and audit-logged</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <g transform="translate(370,80)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI03</text>
+    <text x="100" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Privilege Abuse</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Least-privilege scopes</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">+ FGA enforcement</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <g transform="translate(540,80)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI04</text>
+    <text x="100" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Supply Chain</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Tool defs pinned</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">at build time</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <g transform="translate(710,80)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI05</text>
+    <text x="100" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Code Exec</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">No code execution</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">tools exposed</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <!-- Row 2: ASI06-ASI10 -->
+  <g transform="translate(30,180)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI06</text>
+    <text x="100" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Context Poison</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">FGA document-level</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">access control</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <g transform="translate(200,180)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI07</text>
+    <text x="100" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Inter-Agent</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Single-agent arch</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">no inter-agent calls</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <g transform="translate(370,180)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI08</text>
+    <text x="100" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Cascading Fail</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Error capture layer</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">prevents silent cascade</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <g transform="translate(540,180)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#f97316" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#f9731620"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#f97316">ASI09</text>
+    <text x="105" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Trust Exploit</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Step-up auth via</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">interrupt circuit breaker</text>
+    <circle cx="145" cy="12" r="5" fill="#f97316"/>
+  </g>
+
+  <g transform="translate(710,180)">
+    <rect x="0" y="0" width="160" height="80" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="24" rx="10" fill="#22c55e20"/>
+    <text x="12" y="17" font-family="monospace" font-size="11" font-weight="700" fill="#22c55e">ASI10</text>
+    <text x="100" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">Rogue Agents</text>
+    <text x="80" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">Real-time behavior</text>
+    <text x="80" y="58" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#cbd5e1">monitoring via Observatory</text>
+    <circle cx="145" cy="12" r="5" fill="#22c55e"/>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(30,300)">
+    <rect x="0" y="0" width="840" height="160" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="420" y="25" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#f8fafc">Auth0 Features → OWASP Mitigation</text>
+
+    <!-- Token Vault -->
+    <rect x="20" y="45" width="250" height="45" rx="8" fill="#1e293b" stroke="#3b82f640" stroke-width="1"/>
+    <text x="30" y="63" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#3b82f6">Token Vault (RFC 8693)</text>
+    <text x="30" y="80" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">→ ASI01, ASI02, ASI03, ASI04</text>
+
+    <!-- FGA -->
+    <rect x="290" y="45" width="250" height="45" rx="8" fill="#1e293b" stroke="#22c55e40" stroke-width="1"/>
+    <text x="300" y="63" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#22c55e">FGA / OpenFGA (ReBAC)</text>
+    <text x="300" y="80" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">→ ASI03, ASI06</text>
+
+    <!-- Step-Up -->
+    <rect x="560" y="45" width="260" height="45" rx="8" fill="#1e293b" stroke="#f9731640" stroke-width="1"/>
+    <text x="570" y="63" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#f97316">Step-Up (Interrupt Pattern)</text>
+    <text x="570" y="80" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">→ ASI02, ASI03, ASI09</text>
+
+    <!-- Observatory -->
+    <rect x="20" y="100" width="250" height="45" rx="8" fill="#1e293b" stroke="#a855f740" stroke-width="1"/>
+    <text x="30" y="118" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#a855f7">Post-Auth Observatory</text>
+    <text x="30" y="135" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">→ ASI08, ASI10 (RSAC 2026 gap)</text>
+
+    <!-- Error Capture -->
+    <rect x="290" y="100" width="250" height="45" rx="8" fill="#1e293b" stroke="#eab30840" stroke-width="1"/>
+    <text x="300" y="118" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#eab308">Error Capture Layer</text>
+    <text x="300" y="135" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">→ ASI08 (fixes auth0-ai-js#175)</text>
+
+    <!-- Single Agent -->
+    <rect x="560" y="100" width="260" height="45" rx="8" fill="#1e293b" stroke="#06b6d440" stroke-width="1"/>
+    <text x="570" y="118" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#06b6d4">Sandboxed Architecture</text>
+    <text x="570" y="135" font-family="system-ui,sans-serif" font-size="9" fill="#94a3b8">→ ASI05, ASI07</text>
+  </g>
+</svg>
