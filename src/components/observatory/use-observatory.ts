@@ -41,25 +41,30 @@ export function useObservatory(pollInterval = 3000) {
   const [tokenStates, setTokenStates] = useState<TokenState[]>([]);
   const [events, setEvents] = useState<ObservatoryEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
+      setError(null);
       const [statsRes, eventsRes] = await Promise.all([
         fetch("/api/observatory/events?view=stats"),
         fetch("/api/observatory/events?limit=50"),
       ]);
 
-      if (statsRes.ok) {
-        const data = await statsRes.json();
-        setStats(data.stats);
-        setTokenStates(data.tokenStates);
+      if (!statsRes.ok || !eventsRes.ok) {
+        setError(`Observatory API returned ${statsRes.status}/${eventsRes.status}`);
+        return;
       }
 
-      if (eventsRes.ok) {
-        const data = await eventsRes.json();
-        setEvents(data.events);
-      }
+      const statsData = await statsRes.json();
+      setStats(statsData.stats);
+      setTokenStates(statsData.tokenStates);
+
+      const eventsData = await eventsRes.json();
+      setEvents(eventsData.events);
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to fetch observatory data";
+      setError(message);
       console.error("Observatory fetch error:", err);
     } finally {
       setLoading(false);
@@ -72,5 +77,5 @@ export function useObservatory(pollInterval = 3000) {
     return () => clearInterval(interval);
   }, [fetchData, pollInterval]);
 
-  return { stats, tokenStates, events, loading, refresh: fetchData };
+  return { stats, tokenStates, events, loading, error, refresh: fetchData };
 }

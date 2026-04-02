@@ -118,7 +118,7 @@ export const checkCalendarAvailability = getWithGoogleCalendar()(
 
         if (err.status === 401) {
           const { TokenVaultError } = await import("@auth0/ai/interrupts");
-          throw new TokenVaultError("google-oauth2");
+          throw new TokenVaultError("Authorization required to access Google Calendar");
         }
         throw error;
       }
@@ -220,7 +220,7 @@ export const listCalendarEvents = getWithGoogleCalendar()(
 
         if (err.status === 401) {
           const { TokenVaultError } = await import("@auth0/ai/interrupts");
-          throw new TokenVaultError("google-oauth2");
+          throw new TokenVaultError("Authorization required to access Google Calendar");
         }
         throw error;
       }

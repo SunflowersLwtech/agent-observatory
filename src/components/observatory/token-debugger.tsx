@@ -9,6 +9,9 @@ import {
   Clock,
   Shield,
   Bug,
+  Calendar,
+  GitFork,
+  MessageSquare,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +44,7 @@ export function TokenDebugger() {
       key: "google",
       name: "Google Calendar",
       connection: "google-oauth2",
-      icon: "🗓️",
+      icon: Calendar,
       configSteps: [
         "Enable Token Exchange grant type",
         "Configure google-oauth2 social connection",
@@ -57,7 +60,7 @@ export function TokenDebugger() {
       key: "github",
       name: "GitHub",
       connection: "github",
-      icon: "🐙",
+      icon: GitFork,
       configSteps: [
         "Enable Token Exchange grant type",
         "Configure github social connection",
@@ -71,7 +74,7 @@ export function TokenDebugger() {
       key: "slack",
       name: "Slack",
       connection: "slack",
-      icon: "💬",
+      icon: MessageSquare,
       configSteps: [
         "Enable Token Exchange grant type",
         "Configure slack social connection",
@@ -200,7 +203,7 @@ function ServiceDebugCard({
     key: string;
     name: string;
     connection: string;
-    icon: string;
+    icon: React.ComponentType<{ className?: string }>;
     configSteps: string[];
   };
   state?: {
@@ -231,7 +234,7 @@ function ServiceDebugCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{service.icon}</span>
+            <service.icon className="h-6 w-6 text-muted-foreground" />
             <div>
               <CardTitle className="text-sm font-medium">
                 {service.name}

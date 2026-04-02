@@ -110,7 +110,7 @@ export const listGitHubRepos = getWithGitHub()(
 
         if (err.status === 401) {
           const { TokenVaultError } = await import("@auth0/ai/interrupts");
-          throw new TokenVaultError("github");
+          throw new TokenVaultError("Authorization required to access GitHub");
         }
         throw error;
       }
@@ -201,7 +201,7 @@ export const listGitHubIssues = getWithGitHub()(
 
         if (err.status === 401) {
           const { TokenVaultError } = await import("@auth0/ai/interrupts");
-          throw new TokenVaultError("github");
+          throw new TokenVaultError("Authorization required to access GitHub");
         }
         throw error;
       }

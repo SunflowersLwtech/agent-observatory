@@ -98,7 +98,7 @@ export const listSlackChannels = getWithSlack()(
 
         if (err.data?.error === "invalid_auth" || err.data?.error === "token_revoked") {
           const { TokenVaultError } = await import("@auth0/ai/interrupts");
-          throw new TokenVaultError("slack");
+          throw new TokenVaultError("Authorization required to access Slack");
         }
         throw error;
       }
@@ -211,7 +211,7 @@ export const sendSlackMessage = getWithSlack()(
 
         if (err.data?.error === "invalid_auth" || err.data?.error === "token_revoked") {
           const { TokenVaultError } = await import("@auth0/ai/interrupts");
-          throw new TokenVaultError("slack");
+          throw new TokenVaultError("Authorization required to access Slack");
         }
         throw error;
       }
