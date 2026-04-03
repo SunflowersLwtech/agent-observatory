@@ -4,6 +4,7 @@ import {
   getEvents,
   getEventStats,
   getTokenStates,
+  getCorrelatedEvents,
   type EventType,
   type RiskLevel,
 } from "@/lib/observatory/event-store";
@@ -17,6 +18,14 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const view = searchParams.get("view");
+
+  if (view === "correlation") {
+    const service = searchParams.get("service") || undefined;
+    const since = searchParams.get("since")
+      ? Number(searchParams.get("since"))
+      : Date.now() - 15 * 60 * 1000; // default last 15 min
+    return Response.json({ correlations: getCorrelatedEvents(service, since) });
+  }
 
   if (view === "stats") {
     const allEvents = getEvents({ limit: 100 });

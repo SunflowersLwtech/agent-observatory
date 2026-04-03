@@ -145,3 +145,38 @@ export function getTokenStates(): TokenState[] {
 export function clearEvents(): void {
   events.length = 0;
 }
+
+// ============================================================================
+// CREDENTIAL-EVENT CORRELATION (Pattern 1)
+// Answers: "Which tool calls consumed credentials from Service X?"
+// ============================================================================
+
+export interface CorrelatedPair {
+  tokenExchange: ObservatoryEvent;
+  toolCalls: ObservatoryEvent[];
+}
+
+export function getCorrelatedEvents(
+  service?: string,
+  since?: number
+): CorrelatedPair[] {
+  let filtered = events;
+  if (service) {
+    filtered = filtered.filter((e) => e.service === service);
+  }
+  if (since) {
+    filtered = filtered.filter((e) => e.timestamp >= since);
+  }
+
+  const exchanges = filtered.filter((e) => e.type === "token_exchange");
+  const results = filtered.filter((e) => e.type === "tool_result");
+
+  return exchanges.map((exchange) => ({
+    tokenExchange: exchange,
+    toolCalls: results.filter(
+      (r) => r.tool === exchange.tool && r.service === exchange.service &&
+        r.timestamp >= exchange.timestamp &&
+        r.timestamp - exchange.timestamp < 30_000 // within 30s window
+    ),
+  }));
+}
