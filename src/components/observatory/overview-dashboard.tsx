@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { useObservatory } from "./use-observatory";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TokenTimeline } from "./token-timeline";
+import { SecurityPosture } from "./security-posture";
 
 export function OverviewDashboard() {
   const { stats, tokenStates, events, loading } = useObservatory();
@@ -77,6 +78,9 @@ export function OverviewDashboard() {
           description={`of ${tokenStates.length || 3} configured`}
         />
       </div>
+
+      {/* OWASP Security Posture */}
+      <SecurityPosture events={events} />
 
       {/* Service Status + Risk Breakdown */}
       <div className="grid gap-6 md:grid-cols-2">

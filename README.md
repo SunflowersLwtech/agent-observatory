@@ -139,6 +139,10 @@ src/
     fga/                          # FGA authorization model
 ```
 
+## Blog Post
+
+See [BLOG-POST.md](./BLOG-POST.md) for the full technical write-up: *"What Happens After Your Agent Authenticates? Building Post-Auth Observability with Auth0 Token Vault"*
+
 ## Insights & Feedback
 
 ### For Auth0 Product Team
