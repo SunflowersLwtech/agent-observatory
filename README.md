@@ -145,11 +145,15 @@ See [BLOG-POST.md](./BLOG-POST.md) for the full technical write-up: *"What Happe
 
 ## Insights & Feedback
 
-### For Auth0 Product Team
-1. **Token Vault needs a debugger** -- The "Federated connection Refresh Token not found" error should specify which configuration step failed
-2. **Silent error swallowing** (auth0-ai-js#175) -- SDK should propagate errors, not catch and discard
-3. **Post-auth observability** -- Consider adding token exchange events to Auth0 Logs
-4. **Scope-bound risk API** -- A first-party risk classification for OAuth scopes would benefit the ecosystem
+See [FEEDBACK.md](./FEEDBACK.md) for the full actionable feedback submission (6 items with issue references).
+
+### For Auth0 Product Team (Summary)
+1. **Token Vault needs a diagnostic API** -- `GET /api/v2/token-vault/diagnostics` (ref: auth0-ai-samples#66)
+2. **Silent error swallowing** -- Add `onError` callback to `withTokenVault` (ref: auth0-ai-js#175)
+3. **Post-auth event logging** -- Token exchange events in Auth0 Logs (RSAC 2026 gap)
+4. **Scope risk classification API** -- First-party scope-to-risk mapping
+5. **useInterruptions type fix** -- Generic preservation for typed useChat (ref: auth0-ai-js#258)
+6. **MCP tutorial fix** -- Missing Authorization header in Python FastMCP (ref: auth0-ai-samples#62)
 
 ### References
 - South, T. et al. (2025). "AI Agents Need Authenticated Delegation." ICML 2025. arXiv:2501.09674
