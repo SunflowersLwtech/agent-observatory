@@ -36,10 +36,22 @@ interface ObservatoryEvent {
   duration?: number;
 }
 
+interface AnomalyScore {
+  score: number;
+  signals: Array<{
+    type: string;
+    severity: number;
+    description: string;
+    owaspCategory: string;
+  }>;
+  recommendation: string;
+}
+
 export function useObservatory(pollInterval = 3000) {
   const [stats, setStats] = useState<EventStats | null>(null);
   const [tokenStates, setTokenStates] = useState<TokenState[]>([]);
   const [events, setEvents] = useState<ObservatoryEvent[]>([]);
+  const [anomaly, setAnomaly] = useState<AnomalyScore | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +71,7 @@ export function useObservatory(pollInterval = 3000) {
       const statsData = await statsRes.json();
       setStats(statsData.stats);
       setTokenStates(statsData.tokenStates);
+      setAnomaly(statsData.anomaly ?? null);
 
       const eventsData = await eventsRes.json();
       setEvents(eventsData.events);
@@ -77,5 +90,5 @@ export function useObservatory(pollInterval = 3000) {
     return () => clearInterval(interval);
   }, [fetchData, pollInterval]);
 
-  return { stats, tokenStates, events, loading, error, refresh: fetchData };
+  return { stats, tokenStates, events, anomaly, loading, error, refresh: fetchData };
 }

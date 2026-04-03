@@ -123,3 +123,126 @@ export function classifyToolRisk(
 export function shouldTriggerStepUp(riskLevel: RiskLevel): boolean {
   return riskLevel === "high" || riskLevel === "critical";
 }
+
+// ============================================================================
+// BEHAVIORAL ANOMALY DETECTION ENGINE
+// Transforms static risk taxonomy → live runtime security analysis
+// Addresses RSAC 2026 gap: "nothing tracks what happens after authentication"
+// ============================================================================
+
+export interface AnomalyScore {
+  score: number; // 0-100 (0 = normal, 100 = highly anomalous)
+  signals: AnomalySignal[];
+  recommendation: "normal" | "elevated" | "step_up_required" | "block";
+}
+
+export interface AnomalySignal {
+  type: "velocity" | "cross_service" | "scope_escalation" | "error_burst";
+  severity: number; // 0-100 contribution to overall score
+  description: string;
+  owaspCategory: OWASPCategory;
+}
+
+/**
+ * Compute real-time behavioral anomaly score for the current session.
+ * Analyzes the event stream for four anomaly signals:
+ *
+ * 1. Velocity anomaly — too many tool calls in a short window (ASI10: Rogue Agent)
+ * 2. Cross-service escalation — read from A then write to B (ASI01: Goal Hijack)
+ * 3. Scope escalation — higher-risk scopes than prior calls (ASI03: Privilege Abuse)
+ * 4. Error burst — repeated failures indicating probing (ASI02: Tool Misuse)
+ */
+export function computeSessionAnomalyScore(
+  events: Array<{
+    timestamp: number;
+    type: string;
+    service: string;
+    riskLevel: string;
+    outcome: string;
+    tool: string;
+  }>
+): AnomalyScore {
+  const signals: AnomalySignal[] = [];
+  const now = Date.now();
+  const windowMs = 60_000; // 1-minute analysis window
+  const recent = events.filter((e) => e.timestamp >= now - windowMs);
+
+  // Signal 1: Velocity anomaly (>15 tool calls per minute)
+  const toolCalls = recent.filter(
+    (e) => e.type === "tool_result" || e.type === "token_exchange"
+  );
+  if (toolCalls.length > 15) {
+    signals.push({
+      type: "velocity",
+      severity: Math.min(40, (toolCalls.length - 15) * 5),
+      description: `${toolCalls.length} operations in 60s (threshold: 15)`,
+      owaspCategory: "ASI10",
+    });
+  }
+
+  // Signal 2: Cross-service escalation (read from A → write to B within 10s)
+  const riskOrder: RiskLevel[] = ["low", "medium", "high", "critical"];
+  for (let i = 1; i < recent.length; i++) {
+    const prev = recent[i - 1];
+    const curr = recent[i];
+    if (
+      prev.service !== curr.service &&
+      riskOrder.indexOf(prev.riskLevel as RiskLevel) <= 1 && // prev was low/medium (read)
+      riskOrder.indexOf(curr.riskLevel as RiskLevel) >= 2 && // curr is high/critical (write)
+      curr.timestamp - prev.timestamp < 10_000
+    ) {
+      signals.push({
+        type: "cross_service",
+        severity: 35,
+        description: `Read ${prev.service} → Write ${curr.service} within ${Math.round((curr.timestamp - prev.timestamp) / 1000)}s`,
+        owaspCategory: "ASI01",
+      });
+      break; // Only count once per window
+    }
+  }
+
+  // Signal 3: Scope escalation (current call higher risk than session average)
+  if (recent.length >= 3) {
+    const avgRisk =
+      recent.reduce(
+        (sum, e) => sum + riskOrder.indexOf(e.riskLevel as RiskLevel),
+        0
+      ) / recent.length;
+    const lastRisk = riskOrder.indexOf(
+      recent[recent.length - 1]?.riskLevel as RiskLevel
+    );
+    if (lastRisk > avgRisk + 1) {
+      signals.push({
+        type: "scope_escalation",
+        severity: 25,
+        description: `Risk escalated from avg ${avgRisk.toFixed(1)} to ${lastRisk}`,
+        owaspCategory: "ASI03",
+      });
+    }
+  }
+
+  // Signal 4: Error burst (>3 failures in window = possible probing)
+  const failures = recent.filter((e) => e.outcome === "failure");
+  if (failures.length > 3) {
+    signals.push({
+      type: "error_burst",
+      severity: Math.min(30, failures.length * 6),
+      description: `${failures.length} failures in 60s (possible probing)`,
+      owaspCategory: "ASI02",
+    });
+  }
+
+  // Compute overall score
+  const score = Math.min(
+    100,
+    signals.reduce((sum, s) => sum + s.severity, 0)
+  );
+
+  // Determine recommendation
+  let recommendation: AnomalyScore["recommendation"] = "normal";
+  if (score >= 70) recommendation = "block";
+  else if (score >= 50) recommendation = "step_up_required";
+  else if (score >= 25) recommendation = "elevated";
+
+  return { score, signals, recommendation };
+}

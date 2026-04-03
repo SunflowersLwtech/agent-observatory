@@ -16,9 +16,10 @@ import { useObservatory } from "./use-observatory";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TokenTimeline } from "./token-timeline";
 import { SecurityPosture } from "./security-posture";
+import { AnomalyGauge } from "./anomaly-gauge";
 
 export function OverviewDashboard() {
-  const { stats, tokenStates, events, loading } = useObservatory();
+  const { stats, tokenStates, events, anomaly, loading } = useObservatory();
 
   if (loading) {
     return (
@@ -79,8 +80,11 @@ export function OverviewDashboard() {
         />
       </div>
 
-      {/* OWASP Security Posture */}
-      <SecurityPosture events={events} />
+      {/* Security: OWASP Posture + Anomaly Detection */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <SecurityPosture events={events} />
+        <AnomalyGauge anomaly={anomaly} />
+      </div>
 
       {/* Service Status + Risk Breakdown */}
       <div className="grid gap-6 md:grid-cols-2">

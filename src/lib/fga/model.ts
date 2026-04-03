@@ -136,3 +136,76 @@ export function canAccessService(
 ): boolean {
   return checkPermission(`user:${userId}`, "user", `service:${service}`);
 }
+
+// ============================================================================
+// SCOPE-LEVEL AUTHORIZATION (Per-scope toggle control)
+// Enables granular consent: allow channels:read but deny chat:write
+// ============================================================================
+
+const deniedScopes: Map<string, Set<string>> = new Map();
+
+/**
+ * Deny a specific scope for a user on a service.
+ */
+export function denyScopeForUser(
+  userId: string,
+  service: string,
+  scope: string
+): void {
+  const key = `${userId}:${service}`;
+  if (!deniedScopes.has(key)) {
+    deniedScopes.set(key, new Set());
+  }
+  deniedScopes.get(key)!.add(scope);
+}
+
+/**
+ * Allow a previously denied scope for a user on a service.
+ */
+export function allowScopeForUser(
+  userId: string,
+  service: string,
+  scope: string
+): void {
+  const key = `${userId}:${service}`;
+  deniedScopes.get(key)?.delete(scope);
+}
+
+/**
+ * Check if a specific scope is denied for a user.
+ */
+export function isScopeDenied(
+  userId: string,
+  service: string,
+  scope: string
+): boolean {
+  const key = `${userId}:${service}`;
+  return deniedScopes.get(key)?.has(scope) ?? false;
+}
+
+/**
+ * Get all denied scopes for a user on a service.
+ */
+export function getDeniedScopes(
+  userId: string,
+  service: string
+): string[] {
+  const key = `${userId}:${service}`;
+  return Array.from(deniedScopes.get(key) ?? []);
+}
+
+/**
+ * Get all denied scopes across all services for a user.
+ */
+export function getAllDeniedScopes(
+  userId: string
+): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const [key, scopes] of deniedScopes.entries()) {
+    if (key.startsWith(`${userId}:`)) {
+      const service = key.slice(userId.length + 1);
+      result[service] = Array.from(scopes);
+    }
+  }
+  return result;
+}

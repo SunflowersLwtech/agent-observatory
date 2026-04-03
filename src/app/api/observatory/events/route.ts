@@ -7,6 +7,7 @@ import {
   type EventType,
   type RiskLevel,
 } from "@/lib/observatory/event-store";
+import { computeSessionAnomalyScore } from "@/lib/observatory/risk-classifier";
 
 export async function GET(req: NextRequest) {
   const session = await auth0.getSession();
@@ -18,9 +19,11 @@ export async function GET(req: NextRequest) {
   const view = searchParams.get("view");
 
   if (view === "stats") {
+    const allEvents = getEvents({ limit: 100 });
     return Response.json({
       stats: getEventStats(),
       tokenStates: getTokenStates(),
+      anomaly: computeSessionAnomalyScore(allEvents),
     });
   }
 

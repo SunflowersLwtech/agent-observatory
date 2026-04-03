@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   PieChart,
   Pie,
@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Unplug, Shield } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface PermissionGraphProps {
   events: Array<{
@@ -67,6 +68,50 @@ export function PermissionGraph({
   stats,
   onRevoke,
 }: PermissionGraphProps) {
+  // Scope toggle state (tracks which scopes are denied)
+  const [deniedScopes, setDeniedScopes] = useState<Record<string, string[]>>({});
+
+  // Fetch denied scopes on mount
+  useEffect(() => {
+    fetch("/api/observatory/scope-toggle")
+      .then((r) => r.ok ? r.json() : { deniedScopes: {} })
+      .then((d) => setDeniedScopes(d.deniedScopes ?? {}))
+      .catch(() => {});
+  }, []);
+
+  const handleScopeToggle = useCallback(
+    async (service: string, scope: string, enabled: boolean) => {
+      // Optimistic update
+      setDeniedScopes((prev) => {
+        const svcDenied = new Set(prev[service] ?? []);
+        if (enabled) svcDenied.delete(scope);
+        else svcDenied.add(scope);
+        return { ...prev, [service]: Array.from(svcDenied) };
+      });
+
+      try {
+        const res = await fetch("/api/observatory/scope-toggle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ service, scope, enabled }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDeniedScopes(data.deniedScopes ?? {});
+        }
+      } catch {
+        // Revert on error
+        setDeniedScopes((prev) => {
+          const svcDenied = new Set(prev[service] ?? []);
+          if (enabled) svcDenied.add(scope);
+          else svcDenied.delete(scope);
+          return { ...prev, [service]: Array.from(svcDenied) };
+        });
+      }
+    },
+    []
+  );
+
   // Service activity data for pie chart
   const serviceData = [
     { name: "Google", value: stats?.byService.google ?? 0, color: SERVICE_COLORS.google },
@@ -270,20 +315,31 @@ export function PermissionGraph({
                         </Badge>
                       </div>
 
-                      {/* Scope nodes */}
+                      {/* Scope nodes with toggle switches */}
                       <div className="space-y-2">
                         {svc.scopes.map((scope) => {
                           const usage = scopeUsage.get(scope.name) ?? 0;
+                          const isDenied = (deniedScopes[svc.key] ?? []).includes(scope.name);
                           return (
                             <div
                               key={scope.name}
-                              className="flex items-center gap-2"
+                              className={`flex items-center gap-2 ${isDenied ? "opacity-50" : ""}`}
                             >
+                              <Switch
+                                checked={!isDenied}
+                                onCheckedChange={(checked) =>
+                                  handleScopeToggle(svc.key, scope.name, checked)
+                                }
+                                className="scale-75"
+                                aria-label={`Toggle ${scope.name} for ${svc.name}`}
+                              />
                               <div
                                 className={`h-6 flex-1 rounded-md flex items-center px-2 text-[10px] font-mono ${
-                                  scope.type === "write"
-                                    ? "bg-orange-500/10 border border-orange-500/20"
-                                    : "bg-secondary/50 border border-border/20"
+                                  isDenied
+                                    ? "bg-destructive/5 border border-destructive/20 line-through"
+                                    : scope.type === "write"
+                                      ? "bg-orange-500/10 border border-orange-500/20"
+                                      : "bg-secondary/50 border border-border/20"
                                 }`}
                               >
                                 <span className="truncate">{scope.name}</span>
@@ -298,8 +354,10 @@ export function PermissionGraph({
                               </div>
                               <div
                                 className={`h-2 w-2 rounded-full ${
-                                  scope.risk === "high"
-                                    ? "bg-orange-500"
+                                  isDenied
+                                    ? "bg-destructive"
+                                    : scope.risk === "high"
+                                      ? "bg-orange-500"
                                     : scope.risk === "medium"
                                       ? "bg-yellow-500"
                                       : "bg-green-500"
