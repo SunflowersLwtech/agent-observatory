@@ -5,7 +5,7 @@ import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { getWithGoogleCalendar } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
-import { canAccessService } from "@/lib/fga/model";
+import { canAccessService, isScopeDenied } from "@/lib/fga/model";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/calendar.freebusy",
@@ -46,6 +46,13 @@ export const checkCalendarAvailability = getWithGoogleCalendar()(
           details: { reason: "FGA: user lacks Google Calendar access" },
         });
         return { error: "Access denied: you do not have permission to access Google Calendar." };
+      }
+
+      if (session?.user?.sub) {
+        const deniedScope = SCOPES.find(s => isScopeDenied(session.user.sub, "google-calendar", s));
+        if (deniedScope) {
+          return { error: `Access denied: scope "${deniedScope}" has been disabled for Google Calendar.` };
+        }
       }
 
       const startTime = Date.now();
@@ -166,6 +173,13 @@ export const listCalendarEvents = getWithGoogleCalendar()(
       const session = await auth0Module.auth0.getSession();
       if (session?.user?.sub && !canAccessService(session.user.sub, "google-calendar")) {
         return { error: "Access denied: you do not have permission to access Google Calendar." };
+      }
+
+      if (session?.user?.sub) {
+        const deniedScope = SCOPES.find(s => isScopeDenied(session.user.sub, "google-calendar", s));
+        if (deniedScope) {
+          return { error: `Access denied: scope "${deniedScope}" has been disabled for Google Calendar.` };
+        }
       }
 
       const startTime = Date.now();

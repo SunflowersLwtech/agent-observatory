@@ -16,7 +16,11 @@ function getAuth0AI() {
 async function getRefreshToken() {
   const { auth0 } = await import("@/lib/auth0");
   const session = await auth0.getSession();
-  return session?.tokenSet.refreshToken as string;
+  const token = session?.tokenSet?.refreshToken;
+  if (!token) {
+    throw new Error("No refresh token available — user may need to re-authenticate");
+  }
+  return token;
 }
 
 export function getWithGoogleCalendar(): ToolWrapper {

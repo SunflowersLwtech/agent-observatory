@@ -326,6 +326,8 @@ function CredentialCorrelation() {
   }, [service, timeRange]);
 
   useEffect(() => {
+    // Initial fetch + polling — setState in effect is intentional for data sync
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCorrelations();
     const interval = setInterval(fetchCorrelations, 3000);
     return () => clearInterval(interval);

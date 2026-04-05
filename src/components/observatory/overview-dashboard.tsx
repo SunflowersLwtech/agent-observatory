@@ -260,7 +260,6 @@ function StatCard({
 
 function ConnectionRow({
   service,
-  connection,
   status,
   healthScore,
   lastExchanged,

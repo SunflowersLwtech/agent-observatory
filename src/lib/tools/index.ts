@@ -3,15 +3,17 @@ import { confirmHighRiskOperation } from "@/lib/observatory/step-up";
 
 let _allTools: Record<string, Tool> | null = null;
 
-export function getAllTools(): Record<string, Tool> {
+export async function getAllTools(): Promise<Record<string, Tool>> {
   if (!_allTools) {
-    // Lazy import to avoid Auth0 SDK init at build time
-    const {
-      checkCalendarAvailability,
-      listCalendarEvents,
-    } = require("./google-calendar");
-    const { listGitHubRepos, listGitHubIssues } = require("./github");
-    const { listSlackChannels, sendSlackMessage } = require("./slack");
+    const [
+      { checkCalendarAvailability, listCalendarEvents },
+      { listGitHubRepos, listGitHubIssues },
+      { listSlackChannels, sendSlackMessage },
+    ] = await Promise.all([
+      import("./google-calendar"),
+      import("./github"),
+      import("./slack"),
+    ]);
 
     _allTools = {
       // Step-up authorization tool (Pattern 3: Interrupt-as-Circuit-Breaker)

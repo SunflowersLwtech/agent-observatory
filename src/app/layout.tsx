@@ -15,9 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agent Observatory",
+  title: "Astrolabe",
   description:
     "Post-authentication observability for AI agents. See what your agent does after it authenticates.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

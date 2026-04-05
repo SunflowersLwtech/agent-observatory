@@ -1,5 +1,11 @@
+import { z } from "zod";
 import { auth0 } from "@/lib/auth0";
 import { updateTokenState, recordEvent } from "@/lib/observatory/event-store";
+
+const RevokeSchema = z.object({
+  connection: z.string().min(1),
+  service: z.string().min(1),
+});
 
 export async function POST(req: Request) {
   const session = await auth0.getSession();
@@ -7,7 +13,21 @@ export async function POST(req: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { connection, service } = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parseResult = RevokeSchema.safeParse(body);
+  if (!parseResult.success) {
+    return Response.json(
+      { error: "Invalid request body", details: parseResult.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { connection, service } = parseResult.data;
 
   // Record the revocation event
   recordEvent({

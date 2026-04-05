@@ -5,7 +5,7 @@ import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { getWithGitHub } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
-import { canAccessService } from "@/lib/fga/model";
+import { canAccessService, isScopeDenied } from "@/lib/fga/model";
 
 const SCOPES = ["repo", "read:user"];
 
@@ -31,6 +31,13 @@ export const listGitHubRepos = getWithGitHub()(
       const session = await auth0Module.auth0.getSession();
       if (session?.user?.sub && !canAccessService(session.user.sub, "github")) {
         return { error: "Access denied: you do not have permission to access GitHub." };
+      }
+
+      if (session?.user?.sub) {
+        const deniedScope = SCOPES.find(s => isScopeDenied(session.user.sub, "github", s));
+        if (deniedScope) {
+          return { error: `Access denied: scope "${deniedScope}" has been disabled for GitHub.` };
+        }
       }
 
       const startTime = Date.now();
@@ -144,6 +151,13 @@ export const listGitHubIssues = getWithGitHub()(
       const session = await auth0Module.auth0.getSession();
       if (session?.user?.sub && !canAccessService(session.user.sub, "github")) {
         return { error: "Access denied: you do not have permission to access GitHub." };
+      }
+
+      if (session?.user?.sub) {
+        const deniedScope = SCOPES.find(s => isScopeDenied(session.user.sub, "github", s));
+        if (deniedScope) {
+          return { error: `Access denied: scope "${deniedScope}" has been disabled for GitHub.` };
+        }
       }
 
       const startTime = Date.now();

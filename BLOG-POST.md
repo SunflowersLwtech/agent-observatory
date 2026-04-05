@@ -48,7 +48,7 @@ We built Agent Observatory as a layer on top of Auth0's existing primitives — 
 
 **Risk-based step-up authorization.** The OWASP Agentic Top 10 provides a concrete risk taxonomy. We map each tool call against relevant risk categories — a cross-service data read touches ASI03 (Identity & Privilege Abuse); a write operation to an external service touches ASI02 (Tool Misuse). Operations that cross a configurable risk threshold trigger a step-up authorization flow via Auth0's interrupt mechanism, requiring the user to explicitly approve before the agent proceeds.
 
-**Fine-grained authorization for data access.** Using Auth0 FGA (built on [OpenFGA](https://openfga.dev), a CNCF sandbox project), document-level access control ensures that when the agent retrieves information for RAG-style operations, it can only access documents the specific user is authorized to see — addressing ASI06 (Memory & Context Poisoning) at the authorization layer.
+**Fine-grained authorization for service access.** Following the Auth0 FGA pattern (built on [OpenFGA](https://openfga.dev) concepts, a CNCF sandbox project), service-level and scope-level access control ensures that the agent can only access services and scopes the specific user has authorized — addressing ASI03 (Identity & Privilege Abuse) at the authorization layer. In production, this pattern would be deployed to a real Auth0 FGA instance for document-level access control.
 
 ## Patterns We Identified
 

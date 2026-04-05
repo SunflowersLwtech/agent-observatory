@@ -1,8 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { recordEvent } from "./event-store";
-import { classifyToolRisk } from "./risk-classifier";
-
 /**
  * Step-up authorization tool — Pattern 3: Interrupt-as-Circuit-Breaker
  *
@@ -23,11 +21,6 @@ export const confirmHighRiskOperation = tool({
       .describe("Why this operation is high risk (OWASP category)"),
   }),
   execute: async ({ operation, service, riskReason }) => {
-    const { riskLevel, owaspCategories } = classifyToolRisk(
-      "confirm_high_risk",
-      []
-    );
-
     recordEvent({
       type: "step_up_triggered",
       tool: "confirmHighRiskOperation",

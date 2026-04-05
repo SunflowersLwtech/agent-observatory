@@ -8,7 +8,7 @@ import {
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { withInterruptions, errorSerializer } from "@auth0/ai-vercel/interrupts";
+import { withInterruptions } from "@auth0/ai-vercel/interrupts";
 import { getAllTools } from "@/lib/tools";
 import { auth0 } from "@/lib/auth0";
 import { initializeUserPermissions } from "@/lib/fga/model";
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 
   setAIContext({ threadID: id });
 
-  const tools = getAllTools();
+  const tools = await getAllTools();
 
   return createUIMessageStreamResponse({
     stream: createUIMessageStream({

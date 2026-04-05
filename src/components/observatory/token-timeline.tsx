@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -20,7 +21,8 @@ interface TimelineEvent {
 
 export function TokenTimeline({ events }: { events: TimelineEvent[] }) {
   // Bucket events into 30-second intervals
-  const now = Date.now();
+  // eslint-disable-next-line react-hooks/purity
+  const now = useMemo(() => Date.now(), [events]); // eslint-disable-line react-hooks/exhaustive-deps
   const bucketSize = 30_000; // 30 seconds
   const bucketCount = 20; // 10 minutes of data
 

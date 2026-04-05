@@ -20,7 +20,7 @@ At RSAC 2026, five major vendors shipped agent identity frameworks. None of them
 |---------|-------|---------------|
 | **Token Vault** | RFC 8693 token exchange for Google Calendar, GitHub, Slack | ASI02, ASI03 |
 | **Token Vault Interrupts** | Step-up authorization as circuit breaker for high-risk ops | ASI09 |
-| **FGA (OpenFGA)** | Relationship-based access control for service permissions | ASI06 |
+| **FGA Pattern (in-memory demo)** | Service-level + scope-level access control (ReBAC pattern) | ASI03 |
 | **Universal Login** | User authentication via @auth0/nextjs-auth0 | ASI03 |
 
 ## OWASP Top 10 for Agentic Applications Coverage
@@ -29,10 +29,10 @@ At RSAC 2026, five major vendors shipped agent identity frameworks. None of them
 |------|------|----------------|
 | Agent Goal Hijack | ASI01 | Token Vault limits operations to defined scopes |
 | Tool Misuse & Exploitation | ASI02 | Every tool call risk-classified and logged |
-| Identity & Privilege Abuse | ASI03 | Least-privilege scopes + post-auth monitoring |
+| Identity & Privilege Abuse | ASI03 | FGA service + scope authorization + least-privilege scopes + post-auth monitoring |
 | Agentic Supply Chain | ASI04 | Tool definitions pinned at build time |
 | Unexpected Code Execution | ASI05 | No code execution tools exposed |
-| Memory & Context Poisoning | ASI06 | FGA service-level access control (ReBAC model) |
+| Memory & Context Poisoning | ASI06 | Not currently addressed (would require RAG integration) |
 | Insecure Inter-Agent Comm | ASI07 | Single-agent architecture, no inter-agent calls |
 | Cascading Failures | ASI08 | Error capture prevents silent cascading |
 | Human-Agent Trust Exploitation | ASI09 | Interrupt-as-circuit-breaker for write ops |

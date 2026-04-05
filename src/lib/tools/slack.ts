@@ -5,7 +5,7 @@ import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { getWithSlack } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk, shouldTriggerStepUp } from "@/lib/observatory/risk-classifier";
-import { canAccessService } from "@/lib/fga/model";
+import { canAccessService, isScopeDenied } from "@/lib/fga/model";
 
 const READ_SCOPES = ["channels:read", "groups:read", "users:read"];
 const WRITE_SCOPES = ["chat:write"];
@@ -23,6 +23,13 @@ export const listSlackChannels = getWithSlack()(
       const session = await auth0Module.auth0.getSession();
       if (session?.user?.sub && !canAccessService(session.user.sub, "slack")) {
         return { error: "Access denied: you do not have permission to access Slack." };
+      }
+
+      if (session?.user?.sub) {
+        const deniedScope = READ_SCOPES.find(s => isScopeDenied(session.user.sub, "slack", s));
+        if (deniedScope) {
+          return { error: `Access denied: scope "${deniedScope}" has been disabled for Slack.` };
+        }
       }
 
       const startTime = Date.now();
@@ -147,6 +154,13 @@ export const sendSlackMessage = getWithSlack()(
         return { error: "Access denied: you do not have permission to use Slack." };
       }
 
+      if (session?.user?.sub) {
+        const deniedScope = WRITE_SCOPES.find(s => isScopeDenied(session.user.sub, "slack", s));
+        if (deniedScope) {
+          return { error: `Access denied: scope "${deniedScope}" has been disabled for Slack.` };
+        }
+      }
+
       // Step-up check (Pattern 3: Interrupt-as-Circuit-Breaker)
       if (shouldTriggerStepUp(riskLevel)) {
         recordEvent({
@@ -156,9 +170,14 @@ export const sendSlackMessage = getWithSlack()(
           scopes: WRITE_SCOPES,
           riskLevel,
           owaspCategories: [...owaspCategories, "ASI09"],
-          outcome: "pending",
+          outcome: "interrupted",
           details: { channel, textLength: text.length },
         });
+        return {
+          error: "Step-up authorization required. Please call confirmHighRiskOperation first to approve this write operation.",
+          requiresConfirmation: true,
+          riskLevel,
+        };
       }
 
       recordEvent({

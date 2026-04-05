@@ -26,6 +26,7 @@ export function ChatInterface() {
 
   const { messages, sendMessage, status, stop, toolInterrupt } =
     useInterruptions((onError) =>
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       useChat({
         transport: new DefaultChatTransport({ api: "/api/chat" }),
         id: chatId,

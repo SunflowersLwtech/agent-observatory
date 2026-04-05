@@ -1,7 +1,5 @@
 import {
   getEvents,
-  getEventStats,
-  getTokenStates,
   type ObservatoryEvent,
 } from "./event-store";
 import { computeSessionAnomalyScore, OWASP_RISKS } from "./risk-classifier";
@@ -51,7 +49,6 @@ export interface ObservatoryReport {
 
 export function generateReport(): ObservatoryReport {
   const events = getEvents({ limit: 1000 });
-  const stats = getEventStats();
   const anomaly = computeSessionAnomalyScore(events);
 
   // OWASP coverage
@@ -141,49 +138,4 @@ export function generateReport(): ObservatoryReport {
     })),
     events,
   };
-}
-
-export function generateMarkdownReport(): string {
-  const report = generateReport();
-  const lines: string[] = [];
-
-  lines.push("# Agent Observatory — Audit Report");
-  lines.push("");
-  lines.push(`Generated: ${report.metadata.generatedAt}`);
-  lines.push(`Events: ${report.metadata.eventCount}`);
-  lines.push("");
-
-  lines.push("## OWASP Agentic Top 10 Coverage");
-  lines.push("");
-  lines.push(`Score: ${report.owaspCoverage.score}/100 (${report.owaspCoverage.activeCategories}/10 categories active)`);
-  lines.push("");
-  lines.push("| Code | Risk | Events | Status |");
-  lines.push("|------|------|--------|--------|");
-  report.owaspCoverage.details.forEach((d) => {
-    lines.push(`| ${d.code} | ${d.name} | ${d.eventCount} | ${d.status} |`);
-  });
-  lines.push("");
-
-  lines.push("## Service Summary");
-  lines.push("");
-  report.serviceSummary.forEach((svc) => {
-    lines.push(`### ${svc.service}`);
-    lines.push(`- Total calls: ${svc.totalCalls}`);
-    lines.push(`- Success rate: ${svc.successRate}%`);
-    lines.push(`- Scopes: ${svc.scopes.join(", ") || "none"}`);
-    lines.push("");
-  });
-
-  lines.push("## Anomaly Detection");
-  lines.push("");
-  lines.push(`Score: ${report.anomalyScore.score}/100 (${report.anomalyScore.recommendation})`);
-  if (report.anomalyScore.signals.length > 0) {
-    lines.push("");
-    report.anomalyScore.signals.forEach((s) => {
-      lines.push(`- [${s.type}] ${s.description} (severity: ${s.severity})`);
-    });
-  }
-  lines.push("");
-
-  return lines.join("\n");
 }

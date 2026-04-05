@@ -5,7 +5,7 @@
  * This model ensures that when the AI agent retrieves information for RAG-style
  * operations, it can only access documents the specific user is authorized to see.
  *
- * Addresses OWASP ASI06 (Memory & Context Poisoning) at the authorization layer.
+ * Addresses OWASP ASI03 (Identity & Privilege Abuse) at the authorization layer.
  *
  * In production, this model would be deployed to Auth0 FGA (OpenFGA).
  * For the hackathon demo, we implement the authorization logic in-memory

@@ -6,8 +6,6 @@ import {
   XCircle,
   AlertTriangle,
   Unplug,
-  Clock,
-  Shield,
   Bug,
   Calendar,
   GitFork,
@@ -178,28 +176,28 @@ export function TokenDebugger() {
             error="Federated connection Refresh Token not found"
             cause="Token Vault hasn't stored tokens for this user/connection"
             fix="Ensure: (1) Token Exchange grant enabled, (2) Social connection configured with 'Connected Accounts for Token Vault', (3) User has completed OAuth flow with the provider, (4) 'Offline Access' permission enabled"
-            ref="auth0-ai-samples#66"
+            reference="auth0-ai-samples#66"
           />
           <Separator />
           <ErrorReference
             error="Silent failure — no error, no token"
             cause="Federated connection errors caught and silently discarded in SDK"
             fix="This is a known SDK bug (auth0-ai-js#175, OPEN). Check Auth0 logs at Dashboard > Monitoring > Logs. Agent Observatory's error capture layer works around this."
-            ref="auth0-ai-js#175"
+            reference="auth0-ai-js#175"
           />
           <Separator />
           <ErrorReference
             error="My Account API returns 404"
             cause="My Account API not enabled or MRRT not configured"
             fix="Enable both: (1) Auth0 Dashboard > Settings > API Authorization Settings > Enable My Account API, (2) Enable Multi-Resource Refresh Token (MRRT) policy"
-            ref="Devpost Forum"
+            reference="Devpost Forum"
           />
           <Separator />
           <ErrorReference
             error="toSorted() is not a function"
             cause="Node.js version too old for Array.prototype.toSorted()"
             fix="Use Node.js 20+ or apply polyfill. ref: udplabs/auth0-ai#17"
-            ref="auth0-ai#17"
+            reference="auth0-ai#17"
           />
         </CardContent>
       </Card>
@@ -419,12 +417,12 @@ function ErrorReference({
   error,
   cause,
   fix,
-  ref: reference,
+  reference,
 }: {
   error: string;
   cause: string;
   fix: string;
-  ref: string;
+  reference: string;
 }) {
   return (
     <div className="space-y-1">
