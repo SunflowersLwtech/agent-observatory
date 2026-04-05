@@ -48,9 +48,15 @@ export function ChatInterface() {
   };
 
   const handleConnectAccount = useCallback((connection: string, scopes: string[]) => {
-    const params = new URLSearchParams({ connection, returnTo: "/close" });
-    scopes.forEach((s) => params.append("scopes", s));
-    const url = `/auth/connect?${params.toString()}`;
+    // Use /auth/login (not /auth/connect) so the SDK exchanges the code
+    // at /auth/callback and properly stores the session with connected account.
+    const params = new URLSearchParams({
+      connection,
+      returnTo: "/close",
+      prompt: "consent",
+    });
+    scopes.forEach((s) => params.append("connection_scope", s));
+    const url = `/auth/login?${params.toString()}`;
     const popup = window.open(url, "_blank", "width=800,height=650,status=no,toolbar=no,menubar=no");
     if (!popup) {
       window.location.href = url;
