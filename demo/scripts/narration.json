@@ -1,0 +1,76 @@
+{
+  "title": "Agent Observatory — Post-Authentication Observability for AI Agents",
+  "total_duration_target": "3:00",
+  "scenes": [
+    {
+      "id": "hook",
+      "duration": "0:15",
+      "visual": "Title card with Agent Observatory logo + OWASP shield icon",
+      "narration": "At RSAC 2026, five major vendors shipped agent identity frameworks. None of them answered a simple question: what does the agent do after it authenticates? Agent Observatory fills that gap.",
+      "subtitle": "What happens AFTER your agent authenticates?"
+    },
+    {
+      "id": "problem",
+      "duration": "0:20",
+      "visual": "Split screen: Auth0 login flow on left, black box with question mark on right",
+      "narration": "Today's AI agents use OAuth to access your calendar, code, and messages. Authentication tells you who the agent is. But it says nothing about what the agent does with those credentials. The OWASP Top 10 for Agentic Applications catalogs ten risks that emerge in exactly this post-authentication blind spot.",
+      "subtitle": "OAuth grants access. Nothing tracks what happens next."
+    },
+    {
+      "id": "solution_overview",
+      "duration": "0:15",
+      "visual": "Architecture diagram animation — tokens flowing through Observatory",
+      "narration": "Agent Observatory makes every post-authentication action observable, auditable, and controllable — using Auth0's existing identity primitives. Three authorization patterns. Full OWASP coverage. Real-time behavioral monitoring.",
+      "subtitle": "Observable. Auditable. Controllable."
+    },
+    {
+      "id": "demo_chat",
+      "duration": "0:30",
+      "visual": "Screen recording: chat interface with agent calling calendar + GitHub tools",
+      "narration": "Here's the agent in action. I ask it to check my calendar. It explains the scopes it needs, calls the Google Calendar API through Token Vault, and returns my availability. Every step — the token exchange, the scope verification, the risk classification — is logged in real time. Now I ask about my GitHub repos. Same flow: FGA authorization check, token retrieval, risk assessment, full audit trail.",
+      "subtitle": "Every tool call: scoped, classified, logged."
+    },
+    {
+      "id": "demo_stepup",
+      "duration": "0:25",
+      "visual": "Screen recording: step-up authorization blocking Slack write, then confirming",
+      "narration": "Now watch what happens with a write operation. I ask the agent to send a Slack message. The system classifies this as high-risk — OWASP ASI09, Human-Agent Trust Exploitation. A server-side circuit breaker blocks execution. The agent must call the step-up authorization tool, present the risk to me, and wait for my explicit confirmation. This is Pattern 3: Interrupt as Circuit Breaker. And it's enforced server-side — even a jailbroken prompt cannot bypass it.",
+      "subtitle": "Pattern 3: Interrupt-as-Circuit-Breaker (server-side enforced)"
+    },
+    {
+      "id": "demo_observatory",
+      "duration": "0:25",
+      "visual": "Screen recording: observatory dashboard with live events, risk timeline, OWASP map",
+      "narration": "The Observatory Dashboard shows everything. Real-time event stream. Risk distribution by service. OWASP coverage map showing which of the ten agentic risks have been detected and mitigated. Credential-event correlation: for every token exchange, you see exactly which tool consumed it and what happened. The anomaly detection engine monitors four behavioral signals — velocity, cross-service escalation, scope escalation, and error bursts — producing a real-time security score.",
+      "subtitle": "Credential-Event Correlation + Anomaly Detection"
+    },
+    {
+      "id": "demo_debugger",
+      "duration": "0:15",
+      "visual": "Screen recording: Token Vault debugger showing connection health",
+      "narration": "The Token Vault Debugger addresses the number one developer pain point. Token Vault setup is a ten-step process with a single uninformative error. Our debugger shows per-connection health scores, configuration checklists, and references to known issues — the developer experience Token Vault needs.",
+      "subtitle": "Token Vault Debugger: the DX Token Vault needs"
+    },
+    {
+      "id": "demo_scope",
+      "duration": "0:10",
+      "visual": "Screen recording: toggling scopes in Permission Landscape",
+      "narration": "Scope-level access control lets you toggle individual OAuth scopes per service. Deny chat-write for Slack, and the agent physically cannot send messages — enforced by the FGA authorization model before the tool even executes.",
+      "subtitle": "Granular scope control via FGA authorization"
+    },
+    {
+      "id": "tech_stack",
+      "duration": "0:10",
+      "visual": "Tech stack diagram: Next.js 16, AI SDK v6, Auth0 Token Vault, FGA",
+      "narration": "Built with Next.js 16, Vercel AI SDK v6, Auth0 Token Vault with RFC 8693 token exchange, and an in-memory FGA authorization model ready for production deployment.",
+      "subtitle": "Next.js 16 + AI SDK v6 + Auth0 Token Vault + FGA"
+    },
+    {
+      "id": "closing",
+      "duration": "0:15",
+      "visual": "Agent Observatory logo + tagline + GitHub link",
+      "narration": "Agent Observatory. Because authentication is just the beginning. The real question is: what happens next? We built the answer. Thank you.",
+      "subtitle": "Authentication is just the beginning."
+    }
+  ]
+}
