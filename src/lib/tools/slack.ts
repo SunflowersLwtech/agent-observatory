@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { WebClient } from "@slack/web-api";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
-import { getWithSlack } from "@/lib/auth0-ai";
+import { getWithSlack, getIdentityToken } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk, shouldTriggerStepUp } from "@/lib/observatory/risk-classifier";
 import { canAccessService, isScopeDenied } from "@/lib/fga/model";
@@ -50,7 +50,9 @@ export const listSlackChannels = getWithSlack()(
       });
 
       try {
-        const accessToken = getAccessTokenFromTokenVault();
+        let accessToken: string;
+        try { accessToken = getAccessTokenFromTokenVault(); }
+        catch { const fb = await getIdentityToken("sign-in-with-slack"); if (!fb) throw new Error("Slack not connected."); accessToken = fb; }
         updateTokenState("slack", {
           service: "Slack",
           connection: "slack",
@@ -196,7 +198,9 @@ export const sendSlackMessage = getWithSlack()(
       });
 
       try {
-        const accessToken = getAccessTokenFromTokenVault();
+        let accessToken: string;
+        try { accessToken = getAccessTokenFromTokenVault(); }
+        catch { const fb = await getIdentityToken("sign-in-with-slack"); if (!fb) throw new Error("Slack not connected."); accessToken = fb; }
         const client = new WebClient(accessToken);
         const result = await client.chat.postMessage({ channel, text });
 

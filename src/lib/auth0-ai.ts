@@ -58,3 +58,64 @@ export function getWithSlack(): ToolWrapper {
   }
   return _withSlack;
 }
+
+// ---------------------------------------------------------------------------
+// Management API fallback — for providers that don't issue refresh tokens
+// (e.g., GitHub OAuth Apps), Token Vault exchange fails. This helper
+// retrieves the stored access_token directly from the user's identity
+// via the Auth0 Management API.
+// ---------------------------------------------------------------------------
+
+let _mgmtTokenCache: { token: string; expiresAt: number } | null = null;
+
+async function getManagementToken(): Promise<string> {
+  if (_mgmtTokenCache && Date.now() < _mgmtTokenCache.expiresAt) {
+    return _mgmtTokenCache.token;
+  }
+  const res = await fetch(`https://${process.env.AUTH0_DOMAIN ?? process.env.AUTH0_ISSUER_BASE_URL?.replace(/^https?:\/\//, "")}/oauth/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "client_credentials",
+      client_id: process.env.AUTH0_CLIENT_ID,
+      client_secret: process.env.AUTH0_CLIENT_SECRET,
+      audience: `https://${process.env.AUTH0_DOMAIN ?? process.env.AUTH0_ISSUER_BASE_URL?.replace(/^https?:\/\//, "")}/api/v2/`,
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to get Management API token");
+  const data = await res.json();
+  _mgmtTokenCache = {
+    token: data.access_token,
+    expiresAt: Date.now() + (data.expires_in - 60) * 1000,
+  };
+  return data.access_token;
+}
+
+/**
+ * Get the upstream provider's access_token from the user's linked identity.
+ * Falls back to this when Token Vault exchange fails (e.g., GitHub OAuth Apps
+ * don't issue refresh tokens).
+ */
+export async function getIdentityToken(connection: string): Promise<string | null> {
+  try {
+    const { auth0 } = await import("@/lib/auth0");
+    const session = await auth0.getSession();
+    if (!session?.user?.sub) return null;
+
+    const mgmtToken = await getManagementToken();
+    const domain = process.env.AUTH0_DOMAIN ?? process.env.AUTH0_ISSUER_BASE_URL?.replace(/^https?:\/\//, "");
+    const res = await fetch(
+      `https://${domain}/api/v2/users/${encodeURIComponent(session.user.sub)}?fields=identities&include_fields=true`,
+      { headers: { Authorization: `Bearer ${mgmtToken}` } }
+    );
+    if (!res.ok) return null;
+
+    const user = await res.json();
+    const identity = user.identities?.find(
+      (id: { connection: string }) => id.connection === connection
+    );
+    return identity?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}

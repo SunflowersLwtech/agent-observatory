@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { Octokit } from "@octokit/rest";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
-import { getWithGitHub } from "@/lib/auth0-ai";
+import { getWithGitHub, getIdentityToken } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
 import { canAccessService, isScopeDenied } from "@/lib/fga/model";
@@ -58,7 +58,16 @@ export const listGitHubRepos = getWithGitHub()(
       });
 
       try {
-        const accessToken = getAccessTokenFromTokenVault();
+        // Try Token Vault first, fall back to Management API identity token
+        let accessToken: string;
+        try {
+          accessToken = getAccessTokenFromTokenVault();
+        } catch {
+          const fallback = await getIdentityToken("github");
+          if (!fallback) throw new Error("GitHub not connected. Please connect your GitHub account.");
+          accessToken = fallback;
+        }
+
         updateTokenState("github", {
           service: "GitHub",
           connection: "github",
@@ -122,10 +131,6 @@ export const listGitHubRepos = getWithGitHub()(
           details: { error: err.message },
         });
 
-        if (err.status === 401) {
-          const { TokenVaultError } = await import("@auth0/ai/interrupts");
-          throw new TokenVaultError("Authorization required to access GitHub");
-        }
         throw error;
       }
     },
@@ -178,7 +183,14 @@ export const listGitHubIssues = getWithGitHub()(
       });
 
       try {
-        const accessToken = getAccessTokenFromTokenVault();
+        let accessToken: string;
+        try {
+          accessToken = getAccessTokenFromTokenVault();
+        } catch {
+          const fallback = await getIdentityToken("github");
+          if (!fallback) throw new Error("GitHub not connected. Please connect your GitHub account.");
+          accessToken = fallback;
+        }
         const octokit = new Octokit({ auth: accessToken });
         const { data } = await octokit.rest.issues.listForRepo({
           owner,
