@@ -38,6 +38,31 @@ export function ChatInterface() {
 
   const isLoading = status === "submitted" || status === "streaming";
 
+  const toolConnectionMap: Record<string, { connection: string; scopes: string[] }> = {
+    checkCalendarAvailability: { connection: "google-oauth2", scopes: ["https://www.googleapis.com/auth/calendar.freebusy", "https://www.googleapis.com/auth/calendar.events.readonly"] },
+    listCalendarEvents: { connection: "google-oauth2", scopes: ["https://www.googleapis.com/auth/calendar.freebusy", "https://www.googleapis.com/auth/calendar.events.readonly"] },
+    listGitHubRepos: { connection: "github", scopes: ["repo", "read:user"] },
+    listGitHubIssues: { connection: "github", scopes: ["repo", "read:user"] },
+    listSlackChannels: { connection: "slack", scopes: ["channels:read", "groups:read", "users:read"] },
+    sendSlackMessage: { connection: "slack", scopes: ["channels:read", "chat:write"] },
+  };
+
+  const handleConnectAccount = useCallback((connection: string, scopes: string[]) => {
+    const params = new URLSearchParams({ connection, returnTo: "/close" });
+    scopes.forEach((s) => params.append("scopes", s));
+    const url = `/auth/connect?${params.toString()}`;
+    const popup = window.open(url, "_blank", "width=800,height=650,status=no,toolbar=no,menubar=no");
+    if (!popup) {
+      window.location.href = url;
+      return;
+    }
+    const interval = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(interval);
+      }
+    }, 1000);
+  }, []);
+
   // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
@@ -130,6 +155,12 @@ export function ChatInterface() {
                         key={part.toolCallId}
                         toolName={getToolName(part)}
                         state={part.state}
+                        onConnect={part.state === "output-error" ? () => {
+                          const conn = toolConnectionMap[getToolName(part)];
+                          if (conn) {
+                            handleConnectAccount(conn.connection, conn.scopes);
+                          }
+                        } : undefined}
                       />
                     );
                   }
@@ -203,9 +234,11 @@ export function ChatInterface() {
 function ToolCallCard({
   toolName,
   state,
+  onConnect,
 }: {
   toolName: string;
   state: string;
+  onConnect?: () => void;
 }) {
   const serviceMap: Record<string, { label: string; color: string }> = {
     checkCalendarAvailability: {
@@ -231,18 +264,30 @@ function ToolCallCard({
           {service.label}
         </Badge>
         <span className="text-muted-foreground font-mono">{toolName}</span>
-        <Badge
-          variant={state === "output-available" ? "default" : "secondary"}
-          className="text-xs ml-auto"
-        >
-          {state === "input-streaming"
-            ? "Preparing..."
-            : state === "input-available"
-              ? "Executing..."
-              : state === "output-available"
-                ? "Complete"
-                : state}
-        </Badge>
+        {state === "output-error" && onConnect ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto h-6 text-xs gap-1"
+            onClick={onConnect}
+          >
+            <ExternalLink className="h-3 w-3" />
+            Connect {service.label}
+          </Button>
+        ) : (
+          <Badge
+            variant={state === "output-available" ? "default" : "secondary"}
+            className="text-xs ml-auto"
+          >
+            {state === "input-streaming"
+              ? "Preparing..."
+              : state === "input-available"
+                ? "Executing..."
+                : state === "output-available"
+                  ? "Complete"
+                  : state}
+          </Badge>
+        )}
       </div>
     </Card>
   );

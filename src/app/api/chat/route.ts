@@ -8,8 +8,7 @@ import {
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { withInterruptions, errorSerializer, InterruptionPrefix } from "@auth0/ai-vercel/interrupts";
-import { Auth0Interrupt } from "@auth0/ai/interrupts";
+import { withInterruptions } from "@auth0/ai-vercel/interrupts";
 import { getAllTools } from "@/lib/tools";
 import { auth0 } from "@/lib/auth0";
 import { initializeUserPermissions } from "@/lib/fga/model";
@@ -96,21 +95,6 @@ export async function POST(req: Request) {
           });
 
           writer.merge(result.toUIMessageStream({ sendReasoning: true }));
-
-          // Wait for completion — if any tool threw an Auth0Interrupt,
-          // re-throw it as a stream error so the client's useInterruptions
-          // can detect it and show the ConsentDialog.
-          try {
-            await result.response;
-          } catch (err: unknown) {
-            const cause = (err as { cause?: unknown })?.cause;
-            if (cause instanceof Auth0Interrupt) {
-              const ser = errorSerializer();
-              const msg = ser(err as Parameters<ReturnType<typeof errorSerializer>>[0]);
-              throw new Error(msg);
-            }
-            throw err;
-          }
         },
         { messages, tools }
       ),
