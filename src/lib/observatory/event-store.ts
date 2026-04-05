@@ -1,3 +1,5 @@
+import { Redis } from "@upstash/redis";
+
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 
 export type EventType =
@@ -49,12 +51,51 @@ export interface TokenState {
   healthScore: number; // 0-100
 }
 
-// In-memory event store (per-process, sufficient for hackathon demo)
+// ---------------------------------------------------------------------------
+// Redis client — persistent storage across deployments (Upstash via Vercel Marketplace)
+// Falls back to in-memory when UPSTASH_REDIS_REST_URL / KV_REST_API_URL is not set.
+// ---------------------------------------------------------------------------
+const redis =
+  process.env.KV_REST_API_URL
+    ? new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN! })
+    : process.env.UPSTASH_REDIS_REST_URL
+      ? Redis.fromEnv()
+      : null;
+
+const REDIS_EVENTS_KEY = "observatory:events";
+const REDIS_TOKENS_KEY = "observatory:tokens";
+
+// In-memory cache (serves reads; Redis provides cross-deploy persistence)
 const events: ObservatoryEvent[] = [];
 const tokenStates: Map<string, TokenState> = new Map();
 const MAX_EVENTS = 1000;
 
 let eventCounter = 0;
+let _hydrated = false;
+
+/**
+ * Hydrate in-memory store from Redis on cold start.
+ * Call once at the top of every route handler that reads events.
+ * No-op when Redis is unconfigured or already hydrated.
+ */
+export async function ensureHydrated(): Promise<void> {
+  if (_hydrated || !redis) return;
+  try {
+    const stored = await redis.lrange<ObservatoryEvent>(REDIS_EVENTS_KEY, 0, -1);
+    if (stored.length > 0 && events.length === 0) {
+      events.push(...stored);
+    }
+    const tokens = await redis.hgetall<Record<string, TokenState>>(REDIS_TOKENS_KEY);
+    if (tokens && tokenStates.size === 0) {
+      for (const [key, state] of Object.entries(tokens)) {
+        tokenStates.set(key, state);
+      }
+    }
+  } catch (e) {
+    console.error("[event-store] Redis hydration failed, using memory-only:", e);
+  }
+  _hydrated = true;
+}
 
 export function generateEventId(): string {
   return `evt_${Date.now()}_${++eventCounter}`;
@@ -72,6 +113,13 @@ export function recordEvent(
   if (events.length > MAX_EVENTS) {
     events.splice(0, events.length - MAX_EVENTS);
   }
+  // Persist to Redis (fire-and-forget)
+  if (redis) {
+    redis
+      .rpush(REDIS_EVENTS_KEY, full)
+      .then(() => redis.ltrim(REDIS_EVENTS_KEY, -MAX_EVENTS, -1))
+      .catch(console.error);
+  }
   return full;
 }
 
@@ -81,8 +129,12 @@ export function getEvents(opts?: {
   type?: EventType;
   service?: string;
   riskLevel?: RiskLevel;
+  userId?: string;
 }): ObservatoryEvent[] {
   let filtered = events;
+  if (opts?.userId) {
+    filtered = filtered.filter((e) => e.userId === opts.userId);
+  }
   if (opts?.since) {
     filtered = filtered.filter((e) => e.timestamp >= opts.since!);
   }
@@ -99,11 +151,12 @@ export function getEvents(opts?: {
   return filtered.slice(-limit);
 }
 
-export function getEventStats() {
+export function getEventStats(userId?: string) {
+  const scoped = userId ? events.filter((e) => e.userId === userId) : events;
   const last5min = Date.now() - 5 * 60 * 1000;
-  const recent = events.filter((e) => e.timestamp >= last5min);
+  const recent = scoped.filter((e) => e.timestamp >= last5min);
   return {
-    total: events.length,
+    total: scoped.length,
     recent: recent.length,
     byRisk: {
       low: recent.filter((e) => e.riskLevel === "low").length,
@@ -126,24 +179,41 @@ export function getEventStats() {
 
 export function updateTokenState(
   key: string,
-  state: Partial<TokenState> & { service: string; connection: string }
+  state: Partial<TokenState> & { service: string; connection: string },
+  userId?: string
 ): void {
-  const existing = tokenStates.get(key);
-  tokenStates.set(key, {
+  const storeKey = userId ? `${userId}:${key}` : key;
+  const existing = tokenStates.get(storeKey);
+  const merged: TokenState = {
     scopes: [],
     status: "disconnected",
     healthScore: 0,
     ...existing,
     ...state,
-  });
+  };
+  tokenStates.set(storeKey, merged);
+  // Persist to Redis (fire-and-forget)
+  if (redis) {
+    redis.hset(REDIS_TOKENS_KEY, { [storeKey]: merged }).catch(console.error);
+  }
 }
 
-export function getTokenStates(): TokenState[] {
+export function getTokenStates(userId?: string): TokenState[] {
+  if (userId) {
+    const prefix = `${userId}:`;
+    return Array.from(tokenStates.entries())
+      .filter(([k]) => k.startsWith(prefix))
+      .map(([, v]) => v);
+  }
   return Array.from(tokenStates.values());
 }
 
 export function clearEvents(): void {
   events.length = 0;
+  _hydrated = false;
+  if (redis) {
+    redis.del(REDIS_EVENTS_KEY).catch(console.error);
+  }
 }
 
 // ============================================================================
@@ -158,9 +228,13 @@ export interface CorrelatedPair {
 
 export function getCorrelatedEvents(
   service?: string,
-  since?: number
+  since?: number,
+  userId?: string
 ): CorrelatedPair[] {
   let filtered = events;
+  if (userId) {
+    filtered = filtered.filter((e) => e.userId === userId);
+  }
   if (service) {
     filtered = filtered.filter((e) => e.service === service);
   }

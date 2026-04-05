@@ -1,4 +1,5 @@
 import { auth0 } from "@/lib/auth0";
+import { ensureHydrated } from "@/lib/observatory/event-store";
 import { generateReport } from "@/lib/observatory/report-generator";
 
 export async function GET() {
@@ -7,6 +8,7 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  await ensureHydrated();
   const report = generateReport();
 
   return Response.json(report, {

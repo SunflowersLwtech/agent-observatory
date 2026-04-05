@@ -5,6 +5,7 @@ import {
   getEventStats,
   getTokenStates,
   getCorrelatedEvents,
+  ensureHydrated,
   type EventType,
   type RiskLevel,
 } from "@/lib/observatory/event-store";
@@ -16,6 +17,8 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  await ensureHydrated();
+
   const { searchParams } = new URL(req.url);
   const view = searchParams.get("view");
 
@@ -24,14 +27,14 @@ export async function GET(req: NextRequest) {
     const since = searchParams.get("since")
       ? Number(searchParams.get("since"))
       : Date.now() - 15 * 60 * 1000; // default last 15 min
-    return Response.json({ correlations: getCorrelatedEvents(service, since) });
+    return Response.json({ correlations: getCorrelatedEvents(service, since, session.user.sub) });
   }
 
   if (view === "stats") {
-    const allEvents = getEvents({ limit: 100 });
+    const allEvents = getEvents({ limit: 100, userId: session.user.sub });
     return Response.json({
-      stats: getEventStats(),
-      tokenStates: getTokenStates(),
+      stats: getEventStats(session.user.sub),
+      tokenStates: getTokenStates(session.user.sub),
       anomaly: computeSessionAnomalyScore(allEvents),
     });
   }
@@ -44,6 +47,7 @@ export async function GET(req: NextRequest) {
     type: (searchParams.get("type") as EventType) || undefined,
     service: searchParams.get("service") || undefined,
     riskLevel: (searchParams.get("riskLevel") as RiskLevel) || undefined,
+    userId: session.user.sub,
   });
 
   return Response.json({ events });

@@ -125,10 +125,15 @@ export function shouldTriggerStepUp(riskLevel: RiskLevel): boolean {
 }
 
 // ============================================================================
-// BEHAVIORAL ANOMALY DETECTION ENGINE
+// RULE-BASED RUNTIME SECURITY MONITOR
 // Transforms static risk taxonomy → live runtime security analysis
 // Addresses RSAC 2026 gap: "nothing tracks what happens after authentication"
 // ============================================================================
+
+// Configurable thresholds (override via environment variables)
+const VELOCITY_THRESHOLD = Number(process.env.ANOMALY_VELOCITY ?? 15);
+const ERROR_BURST_THRESHOLD = Number(process.env.ANOMALY_ERROR_BURST ?? 3);
+const CROSS_SERVICE_WINDOW_MS = Number(process.env.ANOMALY_CROSS_SERVICE_WINDOW ?? 10_000);
 
 export interface AnomalyScore {
   score: number; // 0-100 (0 = normal, 100 = highly anomalous)
@@ -160,22 +165,23 @@ export function computeSessionAnomalyScore(
     riskLevel: string;
     outcome: string;
     tool: string;
-  }>
+  }>,
+  windowMs: number = 300_000 // default 5 minutes (aligned with getEventStats 5min window)
 ): AnomalyScore {
   const signals: AnomalySignal[] = [];
   const now = Date.now();
-  const windowMs = 60_000; // 1-minute analysis window
   const recent = events.filter((e) => e.timestamp >= now - windowMs);
 
-  // Signal 1: Velocity anomaly (>15 tool calls per minute)
+  // Signal 1: Velocity anomaly (>15 tool calls per minute, scaled to window)
   const toolCalls = recent.filter(
     (e) => e.type === "tool_result" || e.type === "token_exchange"
   );
-  if (toolCalls.length > 15) {
+  const velocityThreshold = Math.ceil(VELOCITY_THRESHOLD * (windowMs / 60_000));
+  if (toolCalls.length > velocityThreshold) {
     signals.push({
       type: "velocity",
-      severity: Math.min(40, (toolCalls.length - 15) * 5),
-      description: `${toolCalls.length} operations in 60s (threshold: 15)`,
+      severity: Math.min(40, (toolCalls.length - velocityThreshold) * 5),
+      description: `${toolCalls.length} operations in ${windowMs / 1000}s (threshold: ${velocityThreshold})`,
       owaspCategory: "ASI10",
     });
   }
@@ -189,7 +195,7 @@ export function computeSessionAnomalyScore(
       prev.service !== curr.service &&
       riskOrder.indexOf(prev.riskLevel as RiskLevel) <= 1 && // prev was low/medium (read)
       riskOrder.indexOf(curr.riskLevel as RiskLevel) >= 2 && // curr is high/critical (write)
-      curr.timestamp - prev.timestamp < 10_000
+      curr.timestamp - prev.timestamp < CROSS_SERVICE_WINDOW_MS
     ) {
       signals.push({
         type: "cross_service",
@@ -223,11 +229,11 @@ export function computeSessionAnomalyScore(
 
   // Signal 4: Error burst (>3 failures in window = possible probing)
   const failures = recent.filter((e) => e.outcome === "failure");
-  if (failures.length > 3) {
+  if (failures.length > ERROR_BURST_THRESHOLD) {
     signals.push({
       type: "error_burst",
       severity: Math.min(30, failures.length * 6),
-      description: `${failures.length} failures in 60s (possible probing)`,
+      description: `${failures.length} failures in ${windowMs / 1000}s (possible probing)`,
       owaspCategory: "ASI02",
     });
   }
