@@ -38,6 +38,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# demo generated assets (large binaries)
+/demo/output/
+/demo/recordings/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

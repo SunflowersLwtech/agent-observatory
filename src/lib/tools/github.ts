@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { Octokit } from "@octokit/rest";
-import { getIdentityToken } from "@/lib/auth0-ai";
+import { getIdentityTokenWithMeta } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
 import { canAccessService, isScopeDenied } from "@/lib/fga/model";
@@ -56,19 +56,20 @@ export const listGitHubRepos = tool({
       });
 
       try {
-        const accessToken = await getIdentityToken("github");
-        if (!accessToken) throw new Error("GitHub not connected. Please connect your GitHub account.");
+        const tokenResult = await getIdentityTokenWithMeta("github");
+        if (!tokenResult) throw new Error("GitHub not connected. Please connect your GitHub account.");
 
         updateTokenState("github", {
           service: "GitHub",
           connection: "github",
           status: "connected",
           lastExchanged: Date.now(),
+          expiresAt: tokenResult.expiresAt ?? undefined,
           scopes: SCOPES,
           healthScore: 100,
         });
 
-        const octokit = new Octokit({ auth: accessToken });
+        const octokit = new Octokit({ auth: tokenResult.accessToken });
         const { data } = await octokit.rest.repos.listForAuthenticatedUser({
           sort,
           per_page: perPage,
@@ -172,9 +173,9 @@ export const listGitHubIssues = tool({
       });
 
       try {
-        const accessToken = await getIdentityToken("github");
-        if (!accessToken) throw new Error("GitHub not connected. Please connect your GitHub account.");
-        const octokit = new Octokit({ auth: accessToken });
+        const tokenResult = await getIdentityTokenWithMeta("github");
+        if (!tokenResult) throw new Error("GitHub not connected. Please connect your GitHub account.");
+        const octokit = new Octokit({ auth: tokenResult.accessToken });
         const { data } = await octokit.rest.issues.listForRepo({
           owner,
           repo,

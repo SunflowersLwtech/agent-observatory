@@ -1,9 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { WebClient } from "@slack/web-api";
-import { getIdentityToken } from "@/lib/auth0-ai";
+import { getIdentityTokenWithMeta } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk, shouldTriggerStepUp } from "@/lib/observatory/risk-classifier";
+import { hasValidStepUp, consumeStepUp } from "@/lib/observatory/step-up";
 import { canAccessService, isScopeDenied } from "@/lib/fga/model";
 
 const READ_SCOPES = ["channels:read", "groups:read", "users:read"];
@@ -48,18 +49,19 @@ export const listSlackChannels = tool({
       });
 
       try {
-        const accessToken = await getIdentityToken("sign-in-with-slack");
-        if (!accessToken) throw new Error("Slack not connected. Please connect your Slack account.");
+        const tokenResult = await getIdentityTokenWithMeta("sign-in-with-slack");
+        if (!tokenResult) throw new Error("Slack not connected. Please connect your Slack account.");
         updateTokenState("slack", {
           service: "Slack",
           connection: "slack",
           status: "connected",
           lastExchanged: Date.now(),
+          expiresAt: tokenResult.expiresAt ?? undefined,
           scopes: [...READ_SCOPES, ...WRITE_SCOPES],
-          healthScore: 100,
+          healthScore: tokenResult.source === "env_fallback" ? 80 : 100,
         });
 
-        const client = new WebClient(accessToken);
+        const client = new WebClient(tokenResult.accessToken);
         const result = await client.conversations.list({
           limit,
           types: "public_channel,private_channel",
@@ -159,7 +161,9 @@ export const sendSlackMessage = tool({
       }
 
       // Step-up check (Pattern 3: Interrupt-as-Circuit-Breaker)
-      if (shouldTriggerStepUp(riskLevel)) {
+      // Server-side enforcement: even if the LLM skips confirmHighRiskOperation,
+      // the write tool refuses to execute without a valid step-up record.
+      if (shouldTriggerStepUp(riskLevel) && !hasValidStepUp("slack")) {
         recordEvent({
           type: "step_up_triggered",
           tool: "send_slack_message",
@@ -168,7 +172,11 @@ export const sendSlackMessage = tool({
           riskLevel,
           owaspCategories: [...owaspCategories, "ASI09"],
           outcome: "interrupted",
-          details: { channel, textLength: text.length },
+          details: {
+            channel,
+            textLength: text.length,
+            enforcement: "server-side — no valid step-up record",
+          },
         });
         return {
           error: "Step-up authorization required. Please call confirmHighRiskOperation first to approve this write operation.",
@@ -193,10 +201,13 @@ export const sendSlackMessage = tool({
       });
 
       try {
-        const accessToken = await getIdentityToken("sign-in-with-slack");
-        if (!accessToken) throw new Error("Slack not connected. Please connect your Slack account.");
-        const client = new WebClient(accessToken);
+        const tokenResult = await getIdentityTokenWithMeta("sign-in-with-slack");
+        if (!tokenResult) throw new Error("Slack not connected. Please connect your Slack account.");
+        const client = new WebClient(tokenResult.accessToken);
         const result = await client.chat.postMessage({ channel, text });
+
+        // Consume the step-up record (single-use authorization)
+        consumeStepUp("slack");
 
         recordEvent({
           type: "tool_result",
@@ -211,6 +222,7 @@ export const sendSlackMessage = tool({
             channel,
             messageTs: result.ts,
             textLength: text.length,
+            stepUpConsumed: true,
           },
         });
 

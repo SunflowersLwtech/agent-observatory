@@ -91,12 +91,24 @@ async function getManagementToken(): Promise<string> {
   return data.access_token;
 }
 
+export interface IdentityTokenResult {
+  accessToken: string;
+  /** Estimated expiry timestamp (ms). Null if unknown. */
+  expiresAt: number | null;
+  /** Whether this token was freshly refreshed. */
+  refreshed: boolean;
+  /** Source of the token for observability. */
+  source: "token_vault_fallback" | "management_api" | "refresh" | "env_fallback";
+}
+
 /**
  * Get the upstream provider's access_token from the user's linked identity.
  * If the identity has a refresh_token (e.g., Google with access_type=offline),
  * automatically refreshes expired access_tokens.
+ *
+ * Returns a structured result with expiry info for token lifecycle tracking.
  */
-export async function getIdentityToken(connection: string): Promise<string | null> {
+export async function getIdentityTokenWithMeta(connection: string): Promise<IdentityTokenResult | null> {
   try {
     const { auth0 } = await import("@/lib/auth0");
     const session = await auth0.getSession();
@@ -116,26 +128,45 @@ export async function getIdentityToken(connection: string): Promise<string | nul
     );
     // Slack fallback: use env var (Auth0 identity linking loses Slack tokens)
     if (!identity?.access_token && connection === "sign-in-with-slack") {
-      return process.env.SLACK_BOT_TOKEN ?? null;
+      const botToken = process.env.SLACK_BOT_TOKEN;
+      if (!botToken) return null;
+      return { accessToken: botToken, expiresAt: null, refreshed: false, source: "env_fallback" };
     }
     if (!identity?.access_token) return null;
 
     // For Google: if we have a refresh_token, use it to get a fresh access_token
     if (identity.refresh_token && connection === "google-oauth2") {
-      return refreshGoogleToken(identity.refresh_token);
+      const result = await refreshGoogleTokenWithMeta(identity.refresh_token);
+      if (result) return result;
     }
 
-    return identity.access_token;
+    // Default: return the stored access_token (typically 1h expiry for OAuth providers)
+    return {
+      accessToken: identity.access_token,
+      expiresAt: Date.now() + 3600 * 1000, // Conservative 1h estimate
+      refreshed: false,
+      source: "management_api",
+    };
   } catch {
     return null;
   }
 }
 
+/** Backward-compatible wrapper — returns just the token string. */
+export async function getIdentityToken(connection: string): Promise<string | null> {
+  const result = await getIdentityTokenWithMeta(connection);
+  return result?.accessToken ?? null;
+}
+
 /** Refresh a Google access_token using the stored refresh_token */
-async function refreshGoogleToken(refreshToken: string): Promise<string | null> {
+async function refreshGoogleTokenWithMeta(refreshToken: string): Promise<IdentityTokenResult | null> {
   try {
-    const googleClientId = process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH0_CLIENT_ID!;
-    const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH0_CLIENT_SECRET!;
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    if (!googleClientId || !googleClientSecret) {
+      console.warn("[auth0-ai] GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET not set — cannot refresh Google token");
+      return null;
+    }
 
     const res = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -149,7 +180,13 @@ async function refreshGoogleToken(refreshToken: string): Promise<string | null> 
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.access_token ?? null;
+    if (!data.access_token) return null;
+    return {
+      accessToken: data.access_token,
+      expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
+      refreshed: true,
+      source: "refresh",
+    };
   } catch {
     return null;
   }

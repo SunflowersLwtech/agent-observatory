@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { google } from "googleapis";
-import { getIdentityToken } from "@/lib/auth0-ai";
+import { getIdentityTokenWithMeta } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
 import { canAccessService, isScopeDenied } from "@/lib/fga/model";
@@ -71,18 +71,20 @@ export const checkCalendarAvailability = tool({
       });
 
       try {
-        const accessToken = await getIdentityToken("google-oauth2");
-        if (!accessToken) throw new Error("Google Calendar not connected. Please connect your Google account.");
+        const tokenResult = await getIdentityTokenWithMeta("google-oauth2");
+        if (!tokenResult) throw new Error("Google Calendar not connected. Please connect your Google account.");
         updateTokenState("google", {
           service: "Google Calendar",
           connection: "google-oauth2",
           status: "connected",
           lastExchanged: Date.now(),
+          lastRefreshed: tokenResult.refreshed ? Date.now() : undefined,
+          expiresAt: tokenResult.expiresAt ?? undefined,
           scopes: SCOPES,
           healthScore: 100,
         });
 
-        const calendar = getCalendarClient(accessToken);
+        const calendar = getCalendarClient(tokenResult.accessToken);
         const res = await calendar.freebusy.query({
           requestBody: {
             timeMin,
@@ -197,18 +199,20 @@ export const listCalendarEvents = tool({
       });
 
       try {
-        const accessToken = await getIdentityToken("google-oauth2");
-        if (!accessToken) throw new Error("Google Calendar not connected. Please connect your Google account.");
+        const tokenResult = await getIdentityTokenWithMeta("google-oauth2");
+        if (!tokenResult) throw new Error("Google Calendar not connected. Please connect your Google account.");
         updateTokenState("google", {
           service: "Google Calendar",
           connection: "google-oauth2",
           status: "connected",
           lastExchanged: Date.now(),
+          lastRefreshed: tokenResult.refreshed ? Date.now() : undefined,
+          expiresAt: tokenResult.expiresAt ?? undefined,
           scopes: SCOPES,
           healthScore: 100,
         });
 
-        const calendar = getCalendarClient(accessToken);
+        const calendar = getCalendarClient(tokenResult.accessToken);
         const res = await calendar.events.list({
           calendarId: "primary",
           timeMin,
