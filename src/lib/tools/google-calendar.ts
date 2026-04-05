@@ -18,8 +18,7 @@ function getCalendarClient(accessToken: string) {
   return google.calendar({ version: "v3", auth });
 }
 
-export const checkCalendarAvailability = getWithGoogleCalendar()(
-  tool({
+export const checkCalendarAvailability = tool({
     description:
       "Check if the user is free or busy during a specific time range on Google Calendar",
     inputSchema: z.object({
@@ -73,9 +72,8 @@ export const checkCalendarAvailability = getWithGoogleCalendar()(
       });
 
       try {
-        let accessToken: string;
-        try { accessToken = getAccessTokenFromTokenVault(); }
-        catch { const fb = await getIdentityToken("google-oauth2"); if (!fb) throw new Error("Google not connected."); accessToken = fb; }
+        const accessToken = await getIdentityToken("google-oauth2");
+        if (!accessToken) throw new Error("Google Calendar not connected. Please connect your Google account.");
         updateTokenState("google", {
           service: "Google Calendar",
           connection: "google-oauth2",
@@ -149,11 +147,9 @@ export const checkCalendarAvailability = getWithGoogleCalendar()(
         throw error;
       }
     },
-  })
-);
+});
 
-export const listCalendarEvents = getWithGoogleCalendar()(
-  tool({
+export const listCalendarEvents = tool({
     description:
       "List upcoming events from the user's Google Calendar within a time range",
     inputSchema: z.object({
@@ -202,9 +198,8 @@ export const listCalendarEvents = getWithGoogleCalendar()(
       });
 
       try {
-        let accessToken: string;
-        try { accessToken = getAccessTokenFromTokenVault(); }
-        catch { const fb = await getIdentityToken("google-oauth2"); if (!fb) throw new Error("Google not connected."); accessToken = fb; }
+        const accessToken = await getIdentityToken("google-oauth2");
+        if (!accessToken) throw new Error("Google Calendar not connected. Please connect your Google account.");
         updateTokenState("google", {
           service: "Google Calendar",
           connection: "google-oauth2",
@@ -267,5 +262,4 @@ export const listCalendarEvents = getWithGoogleCalendar()(
         throw error;
       }
     },
-  })
-);
+});

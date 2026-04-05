@@ -9,8 +9,7 @@ import { canAccessService, isScopeDenied } from "@/lib/fga/model";
 
 const SCOPES = ["repo", "read:user"];
 
-export const listGitHubRepos = getWithGitHub()(
-  tool({
+export const listGitHubRepos = tool({
     description:
       "List the authenticated user's GitHub repositories, sorted by most recently updated",
     inputSchema: z.object({
@@ -58,15 +57,8 @@ export const listGitHubRepos = getWithGitHub()(
       });
 
       try {
-        // Try Token Vault first, fall back to Management API identity token
-        let accessToken: string;
-        try {
-          accessToken = getAccessTokenFromTokenVault();
-        } catch {
-          const fallback = await getIdentityToken("github");
-          if (!fallback) throw new Error("GitHub not connected. Please connect your GitHub account.");
-          accessToken = fallback;
-        }
+        const accessToken = await getIdentityToken("github");
+        if (!accessToken) throw new Error("GitHub not connected. Please connect your GitHub account.");
 
         updateTokenState("github", {
           service: "GitHub",
@@ -134,11 +126,9 @@ export const listGitHubRepos = getWithGitHub()(
         throw error;
       }
     },
-  })
-);
+});
 
-export const listGitHubIssues = getWithGitHub()(
-  tool({
+export const listGitHubIssues = tool({
     description:
       "List open issues for a specific GitHub repository",
     inputSchema: z.object({
@@ -183,14 +173,8 @@ export const listGitHubIssues = getWithGitHub()(
       });
 
       try {
-        let accessToken: string;
-        try {
-          accessToken = getAccessTokenFromTokenVault();
-        } catch {
-          const fallback = await getIdentityToken("github");
-          if (!fallback) throw new Error("GitHub not connected. Please connect your GitHub account.");
-          accessToken = fallback;
-        }
+        const accessToken = await getIdentityToken("github");
+        if (!accessToken) throw new Error("GitHub not connected. Please connect your GitHub account.");
         const octokit = new Octokit({ auth: accessToken });
         const { data } = await octokit.rest.issues.listForRepo({
           owner,
@@ -246,5 +230,4 @@ export const listGitHubIssues = getWithGitHub()(
         throw error;
       }
     },
-  })
-);
+});

@@ -10,8 +10,7 @@ import { canAccessService, isScopeDenied } from "@/lib/fga/model";
 const READ_SCOPES = ["channels:read", "groups:read", "users:read"];
 const WRITE_SCOPES = ["chat:write"];
 
-export const listSlackChannels = getWithSlack()(
-  tool({
+export const listSlackChannels = tool({
     description:
       "List Slack channels the user has access to, including public and private channels",
     inputSchema: z.object({
@@ -50,9 +49,8 @@ export const listSlackChannels = getWithSlack()(
       });
 
       try {
-        let accessToken: string;
-        try { accessToken = getAccessTokenFromTokenVault(); }
-        catch { const fb = await getIdentityToken("sign-in-with-slack"); if (!fb) throw new Error("Slack not connected."); accessToken = fb; }
+        const accessToken = await getIdentityToken("sign-in-with-slack");
+        if (!accessToken) throw new Error("Slack not connected. Please connect your Slack account.");
         updateTokenState("slack", {
           service: "Slack",
           connection: "slack",
@@ -119,11 +117,9 @@ export const listSlackChannels = getWithSlack()(
         throw error;
       }
     },
-  })
-);
+});
 
-export const sendSlackMessage = getWithSlack()(
-  tool({
+export const sendSlackMessage = tool({
     description:
       "Send a message to a Slack channel. This is a HIGH RISK operation that may require step-up authorization.",
     inputSchema: z.object({
@@ -198,9 +194,8 @@ export const sendSlackMessage = getWithSlack()(
       });
 
       try {
-        let accessToken: string;
-        try { accessToken = getAccessTokenFromTokenVault(); }
-        catch { const fb = await getIdentityToken("sign-in-with-slack"); if (!fb) throw new Error("Slack not connected."); accessToken = fb; }
+        const accessToken = await getIdentityToken("sign-in-with-slack");
+        if (!accessToken) throw new Error("Slack not connected. Please connect your Slack account.");
         const client = new WebClient(accessToken);
         const result = await client.chat.postMessage({ channel, text });
 
@@ -246,5 +241,4 @@ export const sendSlackMessage = getWithSlack()(
         throw error;
       }
     },
-  })
-);
+});
