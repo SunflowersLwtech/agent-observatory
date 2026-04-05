@@ -1,8 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { WebClient } from "@slack/web-api";
-import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
-import { getWithSlack, getIdentityToken } from "@/lib/auth0-ai";
+import { getIdentityToken } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk, shouldTriggerStepUp } from "@/lib/observatory/risk-classifier";
 import { canAccessService, isScopeDenied } from "@/lib/fga/model";

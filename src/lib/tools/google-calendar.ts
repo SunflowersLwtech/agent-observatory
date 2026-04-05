@@ -1,8 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { google } from "googleapis";
-import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
-import { getWithGoogleCalendar, getIdentityToken } from "@/lib/auth0-ai";
+import { getIdentityToken } from "@/lib/auth0-ai";
 import { recordEvent, updateTokenState } from "@/lib/observatory/event-store";
 import { classifyToolRisk } from "@/lib/observatory/risk-classifier";
 import { canAccessService, isScopeDenied } from "@/lib/fga/model";

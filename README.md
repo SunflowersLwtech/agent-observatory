@@ -120,23 +120,30 @@ src/
   app/
     api/
       chat/route.ts              # AI chat with Token Vault tools
-      observatory/events/         # Observatory event API
+      observatory/
+        events/                  # Observatory event API
+        report/                  # PDF/JSON audit reports
+        revoke/                  # Token revocation endpoint
+        scope-toggle/            # Per-scope access control
+    auth/connect/                # Connected-account linking flow
+    close/page.tsx               # Post-connect popup close
     dashboard/
-      page.tsx                    # Overview dashboard
-      chat/page.tsx               # Agent chat interface
-      observatory/page.tsx        # Full observatory dashboard
-      debugger/page.tsx           # Token Vault debugger
-    page.tsx                      # Landing page
+      page.tsx                   # Overview dashboard
+      chat/page.tsx              # Agent chat interface
+      observatory/page.tsx       # Full observatory dashboard
+      debugger/page.tsx          # Token Vault debugger
+    page.tsx                     # Landing page
   components/
-    chat/                         # Chat UI with interrupt handling
-    observatory/                  # Dashboard visualizations
-    layout/                       # Navbar, theme provider
+    chat/                        # Chat UI with interrupt handling
+    observatory/                 # Dashboard visualizations
+    layout/                      # Navbar, theme provider
+    ui/                          # Shared UI primitives
   lib/
-    auth0.ts                      # Auth0 client (lazy init)
-    auth0-ai.ts                   # Token Vault wrappers
-    tools/                        # Instrumented AI tools
-    observatory/                  # Event store + risk classifier
-    fga/                          # FGA authorization model
+    auth0.ts                     # Auth0 client (lazy init)
+    auth0-ai.ts                  # Token Vault wrappers
+    tools/                       # Instrumented AI tools
+    observatory/                 # Event store + risk classifier
+    fga/                         # FGA authorization model
 ```
 
 ## Blog Post
