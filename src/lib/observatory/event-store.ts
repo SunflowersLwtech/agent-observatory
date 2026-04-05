@@ -57,7 +57,7 @@ export interface TokenState {
 // ---------------------------------------------------------------------------
 const redis =
   process.env.KV_REST_API_URL
-    ? new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN! })
+    ? new Redis({ url: process.env.KV_REST_API_URL.trim(), token: process.env.KV_REST_API_TOKEN!.trim() })
     : process.env.UPSTASH_REDIS_REST_URL
       ? Redis.fromEnv()
       : null;
