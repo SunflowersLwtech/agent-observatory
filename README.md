@@ -87,7 +87,7 @@ Auth0 SDK issue [auth0-ai-js#175](https://github.com/auth0/auth0-ai-js/issues/17
 ### 1. Clone and install
 ```bash
 git clone <repo-url>
-cd agent-observatory
+cd Astrolabe
 npm install
 ```
 
