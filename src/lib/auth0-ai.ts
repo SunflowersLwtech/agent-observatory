@@ -134,9 +134,8 @@ export async function getIdentityToken(connection: string): Promise<string | nul
 /** Refresh a Google access_token using the stored refresh_token */
 async function refreshGoogleToken(refreshToken: string): Promise<string | null> {
   try {
-    // Use our custom Google OAuth client credentials
-    const googleClientId = "REDACTED_GOOGLE_CLIENT_ID";
-    const googleClientSecret = "REDACTED_GOOGLE_CLIENT_SECRET";
+    const googleClientId = process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH0_CLIENT_ID!;
+    const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH0_CLIENT_SECRET!;
 
     const res = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
