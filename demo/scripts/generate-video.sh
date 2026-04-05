@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-GEMINI_API_KEY="${GEMINI_API_KEY:-REDACTED_GEMINI_API_KEY}"
+GEMINI_API_KEY="${GEMINI_API_KEY:?Set GEMINI_API_KEY env var}"
 MODEL="veo-3.1-generate-preview"
 SCRIPT_DIR="${0:A:h}"
 OUTPUT_DIR="${SCRIPT_DIR}/../output"
