@@ -8,7 +8,7 @@ import {
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { withInterruptions } from "@auth0/ai-vercel/interrupts";
+import { withInterruptions, errorSerializer } from "@auth0/ai-vercel/interrupts";
 import { getAllTools } from "@/lib/tools";
 import { auth0 } from "@/lib/auth0";
 import { initializeUserPermissions } from "@/lib/fga/model";
@@ -94,7 +94,10 @@ export async function POST(req: Request) {
             stopWhen: stepCountIs(10),
           });
 
-          writer.merge(result.toUIMessageStream({ sendReasoning: true }));
+          writer.merge(result.toUIMessageStream({
+            sendReasoning: true,
+            onError: errorSerializer(),
+          }));
         },
         { messages, tools }
       ),
