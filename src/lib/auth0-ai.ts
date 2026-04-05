@@ -93,8 +93,8 @@ async function getManagementToken(): Promise<string> {
 
 /**
  * Get the upstream provider's access_token from the user's linked identity.
- * Falls back to this when Token Vault exchange fails (e.g., GitHub OAuth Apps
- * don't issue refresh tokens).
+ * If the identity has a refresh_token (e.g., Google with access_type=offline),
+ * automatically refreshes expired access_tokens.
  */
 export async function getIdentityToken(connection: string): Promise<string | null> {
   try {
@@ -114,7 +114,43 @@ export async function getIdentityToken(connection: string): Promise<string | nul
     const identity = user.identities?.find(
       (id: { connection: string }) => id.connection === connection
     );
-    return identity?.access_token ?? null;
+    // Slack fallback: use env var (Auth0 identity linking loses Slack tokens)
+    if (!identity?.access_token && connection === "sign-in-with-slack") {
+      return process.env.SLACK_BOT_TOKEN ?? null;
+    }
+    if (!identity?.access_token) return null;
+
+    // For Google: if we have a refresh_token, use it to get a fresh access_token
+    if (identity.refresh_token && connection === "google-oauth2") {
+      return refreshGoogleToken(identity.refresh_token);
+    }
+
+    return identity.access_token;
+  } catch {
+    return null;
+  }
+}
+
+/** Refresh a Google access_token using the stored refresh_token */
+async function refreshGoogleToken(refreshToken: string): Promise<string | null> {
+  try {
+    // Use our custom Google OAuth client credentials
+    const googleClientId = "REDACTED_GOOGLE_CLIENT_ID";
+    const googleClientSecret = "REDACTED_GOOGLE_CLIENT_SECRET";
+
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        client_id: googleClientId,
+        client_secret: googleClientSecret,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.access_token ?? null;
   } catch {
     return null;
   }
